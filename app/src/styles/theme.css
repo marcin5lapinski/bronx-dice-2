@@ -1,0 +1,81 @@
+:root {
+  --bg: #060b14;
+  --panel-bg: rgba(255, 255, 255, 0.03);
+  --panel-border: #1d3a4a;
+  --text: #cfe8ee;
+  --text-dim: #4a6a7a;
+  --accent-blue: #00e5ff;
+  --accent-blue-glow: rgba(0, 229, 255, 0.6);
+  --accent-blue-bg: rgba(0, 229, 255, 0.08);
+  --accent-green: #39ff14;
+  --accent-green-glow: rgba(57, 255, 20, 0.6);
+  --accent-green-bg: rgba(57, 255, 20, 0.06);
+  --font-mono: ui-monospace, Consolas, monospace;
+  --die-size: 48px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --die-size: 60px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+}
+
+#root {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+@media (min-width: 640px) {
+  #root {
+    padding: 32px;
+  }
+}
+
+h1,
+h2 {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent-green);
+  text-shadow: 0 0 8px var(--accent-green-glow);
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+@keyframes dice-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(740deg);
+  }
+}
