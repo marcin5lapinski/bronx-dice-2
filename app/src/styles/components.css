@@ -41,3 +41,71 @@
 .die.rolling {
   animation: dice-spin 1s ease-out;
 }
+
+/* ScoreBoard */
+.score-board {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.score-board th,
+.score-board td {
+  padding: 7px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.score-board th {
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.score-board th:not(:first-child),
+.score-board td:not(:first-child) {
+  text-align: center;
+}
+
+.score-board .current-player-col {
+  background: rgba(0, 229, 255, 0.03);
+}
+
+.score-board tbody button {
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--accent-blue-glow);
+  font-weight: 800;
+  background: transparent;
+  padding: 2px 8px;
+  font-family: inherit;
+}
+
+.score-board .bonus-row td {
+  background: rgba(57, 255, 20, 0.03);
+}
+
+.score-board .bonus-earned {
+  color: var(--accent-green);
+  font-weight: 800;
+  text-shadow: 0 0 6px var(--accent-green-glow);
+}
+
+.score-board .total-row td {
+  border-top: 2px solid var(--panel-border);
+  border-bottom: none;
+  color: var(--accent-green);
+  font-weight: 800;
+  padding-top: 10px;
+}
+
+@media (max-width: 480px) {
+  .score-board {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
