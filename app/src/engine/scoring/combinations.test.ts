@@ -39,6 +39,10 @@ describe('pairScore', () => {
   it('returns 0 when there is no pair', () => {
     expect(pairScore([1, 2, 3, 4, 5])).toBe(0);
   });
+
+  it('picks the higher face value even when the lower face has more dice (full house shape)', () => {
+    expect(pairScore([2, 2, 2, 5, 5])).toBe(10);
+  });
 });
 
 describe('twoPairScore', () => {
@@ -52,6 +56,10 @@ describe('twoPairScore', () => {
 
   it('returns 0 when there is only one pair', () => {
     expect(twoPairScore([2, 2, 1, 3, 6])).toBe(0);
+  });
+
+  it('sums both pairs when a three-of-a-kind hand also contains a pair (full house shape)', () => {
+    expect(twoPairScore([2, 2, 2, 3, 3])).toBe(10);
   });
 });
 
@@ -72,6 +80,10 @@ describe('fourOfKindScore', () => {
 
   it('returns 0 for a full house (three + two, not four)', () => {
     expect(fourOfKindScore([2, 2, 2, 5, 5])).toBe(0);
+  });
+
+  it('scores five matching dice as four of a kind too (count >= 4)', () => {
+    expect(fourOfKindScore([6, 6, 6, 6, 6])).toBe(24);
   });
 });
 
