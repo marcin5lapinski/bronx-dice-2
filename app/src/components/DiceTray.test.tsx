@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DiceTray from './DiceTray';
 import type { DiceValue } from '../types/game';
@@ -71,5 +71,63 @@ describe('DiceTray', () => {
     const buttons = screen.getAllByRole('button');
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true');
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('roll animation', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('adds the rolling class only to dice that are not held when dice change', () => {
+    vi.useFakeTimers();
+    const dice: DiceValue[] = [1, 2, 3, 4, 5];
+    const { rerender } = render(
+      <DiceTray
+        dice={[]}
+        heldDice={[false, false, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+
+    rerender(
+      <DiceTray
+        dice={dice}
+        heldDice={[false, true, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[0]).toHaveClass('rolling');
+    expect(buttons[1]).not.toHaveClass('rolling');
+    expect(buttons[2]).toHaveClass('rolling');
+  });
+
+  it('removes the rolling class after the animation duration elapses', () => {
+    vi.useFakeTimers();
+    const dice: DiceValue[] = [1, 2, 3, 4, 5];
+    const { rerender } = render(
+      <DiceTray
+        dice={[]}
+        heldDice={[false, false, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+
+    rerender(
+      <DiceTray
+        dice={dice}
+        heldDice={[false, false, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+    expect(screen.getAllByRole('button')[0]).toHaveClass('rolling');
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getAllByRole('button')[0]).not.toHaveClass('rolling');
   });
 });

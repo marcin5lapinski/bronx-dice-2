@@ -1,2 +1,43 @@
 /* Component-specific styles. Each section below is added by its own task
    in docs/superpowers/plans/2026-07-02-etap-3-oprawa-wizualna.md. */
+
+/* DiceTray */
+.dice-tray {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.die {
+  width: var(--die-size);
+  height: var(--die-size);
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  font-weight: 800;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.die:not(.held):not(:disabled) {
+  background: var(--accent-blue-bg);
+  border: 2px solid var(--accent-blue);
+  box-shadow:
+    0 0 14px var(--accent-blue-glow),
+    inset 0 0 8px rgba(0, 229, 255, 0.15);
+  color: var(--accent-blue);
+}
+
+.die.held {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+}
+
+.die.rolling {
+  animation: dice-spin 1s ease-out;
+}
