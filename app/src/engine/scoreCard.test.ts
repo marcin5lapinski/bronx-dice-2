@@ -136,6 +136,17 @@ describe('scoreCategory', () => {
     expect(result.upper.threes).toBe(6);
   });
 
+  it('does not double an upper category even when rollsLeft is DOUBLE_SCORE_ROLLS_LEFT', () => {
+    const card = createEmptyScoreCard();
+    const result = scoreCategory(
+      card,
+      'threes',
+      [3, 3, 1, 2, 5],
+      DOUBLE_SCORE_ROLLS_LEFT
+    );
+    expect(result.upper.threes).toBe(6); // not 12 — doubling never applies to upper categories
+  });
+
   it('does not mutate the input score card', () => {
     const card = createEmptyScoreCard();
     scoreCategory(card, 'threes', [3, 3, 1, 2, 5], 3);
