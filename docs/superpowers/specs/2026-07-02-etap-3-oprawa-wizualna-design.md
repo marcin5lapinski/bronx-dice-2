@@ -13,7 +13,7 @@ Etap 3 nadaje aplikacji futurystyczny motyw wizualny z jaskrawymi kolorami. To *
 Wybrany spośród 3 zaprezentowanych kierunków (Neon Cyberpunk, Synthwave Sunset, Electric HUD).
 
 - **Tło:** prawie czarny granat `#060b14`.
-- **Panele:** półprzezroczyste, "szklane" (glassmorphism) — subtelne półprzezroczyste tło, `backdrop-filter: blur(...)`, cienkie obramowania w kolorze `#1d3a4a`.
+- **Panele:** subtelne półprzezroczyste tło (`rgba(255,255,255,0.03)`) i cienkie obramowania w kolorze `#1d3a4a`. (Uwaga po finalnym mockupie: tło aplikacji jest jednolitym płaskim kolorem, nie gradientem/obrazem — `backdrop-filter: blur()` nie dałoby tam żadnego widocznego efektu, więc z niego zrezygnowano; "szklany" wygląd dają samo półprzezroczyste tło + świecące obramowania.)
 - **Akcent 1 — elektryczny błękit `#00e5ff`:** elementy interaktywne/aktywne — niezatrzymane kości (zostaną przerzucone), przyciski akcji, klikalny podgląd wyniku w tabeli, podświetlenie kolumny aktualnego gracza.
 - **Akcent 2 — limonkowa zieleń `#39ff14`:** potwierdzone/zsumowane wartości — wiersz "Bonus" gdy zdobyty, wiersz "Suma"/total, etykieta "Tura: {gracz}".
 - **Typografia:** monospace (`ui-monospace, Consolas, monospace`) w całym motywie gry — efekt terminala/HUD-a statku. Duże litery + `letter-spacing` na etykietach (np. "RZUĆ KOŚĆMI").
