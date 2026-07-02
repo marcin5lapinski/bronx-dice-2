@@ -30,7 +30,8 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 | Tryb lokalny | Hot-seat na jednym urządzeniu, do 6 graczy (spójne z limitem online) |
 | Backend online | Firebase — Firestore (stan pokoju gry) + Cloud Functions (logika autorytatywna) |
 | Projekt Firebase | Nowy, czysty projekt (nie kontynuujemy `bronx-dice` z pierwowzoru) |
-| Tożsamość graczy online | Bez logowania — nick + kod pokoju (Firebase Anonymous Auth w tle dla unikalnego ID sesji) |
+| Tożsamość graczy online | Firebase Auth (Google + e-mail/hasło) — konto wymagane do gry online; profil gracza (nazwa wyświetlana, avatar) powiązany z kontem. Tryb lokalny (hot-seat) nadal nie wymaga logowania |
+| Rejestracja/logowanie | Firebase Auth: rejestracja e-mail+hasło, logowanie, reset hasła (link e-mail), logowanie przez Google. Bez wymogu weryfikacji adresu e-mail w MVP |
 | Losowanie kości i walidacja online | Po stronie serwera (Cloud Functions) — klient nie może samodzielnie wygenerować ani zmodyfikować wyniku rzutu/punktacji |
 | Statystyki graczy (historia gier, wygrane) | Niski priorytet — osobny etap na końcu, opcjonalny |
 | Hosting | Firebase Hosting (spójne z resztą stacku) |
@@ -51,28 +52,37 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 - Stan gry trzymany lokalnie w React (bez backendu).
 - Efekt końcowy: w pełni grywalna wersja offline.
 
-### Etap 3 — Backend Firebase pod rozgrywkę online
-- Nowy projekt Firebase, konfiguracja SDK.
+### Etap 3 — Uwierzytelnianie i profil gracza
+- Nowy projekt Firebase (nie kontynuujemy `bronx-dice` z pierwowzoru), konfiguracja SDK.
+- Firebase Auth: dostawcy Google oraz Email/Password.
+- Ekrany: logowanie, rejestracja, „zapomniałem hasła” (reset przez e-mail).
+- Profil gracza: nazwa wyświetlana + avatar, zapisane w Firestore (`users/{uid}`).
+- Dostęp do trybu online wymaga zalogowania; tryb lokalny (hot-seat) pozostaje dostępny bez logowania.
+- Obsługa stanu sesji (utrzymanie zalogowania po odświeżeniu, wylogowanie).
+
+### Etap 4 — Backend Firebase pod rozgrywkę online
 - Firestore jako źródło stanu pokoju gry (gracze, kolejka, kości, wyniki per gracz, faza gry, kod pokoju).
 - Cloud Functions jako jedyna droga zmiany stanu: `createRoom`, `joinRoom`, `rollDice`, `scoreCategory`, `leaveRoom`.
+- Gracze w pokoju identyfikowani przez `uid` z Firebase Auth (Etap 3) zamiast anonimowej sesji.
 - Firestore Security Rules blokujące bezpośredni zapis stanu gry z klienta (dozwolony tylko odczyt + wywołania Functions).
 
-### Etap 4 — UI trybu online: lobby i rozgrywka na żywo
+### Etap 5 — UI trybu online: lobby i rozgrywka na żywo
 - Tworzenie pokoju / dołączanie kodem, poczekalnia (lista graczy, gotowość, start przez hosta).
+- Lobby pokazuje nazwę i avatar z profilu gracza (Etap 3) zamiast pola do wpisania nicku.
 - Podpięcie planszy gry z Etapu 2 do stanu z Firestore (`onSnapshot`) zamiast lokalnego state — reużycie komponentów UI.
 - Obsługa rozłączenia i ponownego dołączenia gracza w trakcie gry.
 
-### Etap 5 (opcjonalnie, niski priorytet) — Statystyki graczy
-- Zapis historii rozgrywek (lokalnych i online) do Firestore.
+### Etap 6 (opcjonalnie, niski priorytet) — Statystyki graczy
+- Zapis historii rozgrywek (lokalnych i online) do Firestore, powiązanej z kontem gracza.
 - Ekran statystyk: liczba gier, wygrane, historia punktów per gracz.
 
-### Etap 6 — Wdrożenie i dopracowanie
+### Etap 7 — Wdrożenie i dopracowanie
 - Firebase Hosting.
 - Responsywność (telefon/tablet/desktop).
 - Obsługa błędów sieci i rozłączeń.
 - Ewentualnie PWA.
 
-Etapy 1–4 stanowią rdzeń projektu (silnik + lokalnie + online). Etap 5 realizujemy tylko jeśli zostanie na to czas/chęć po ukończeniu etapu 4.
+Etapy 1–5 stanowią rdzeń projektu (silnik + lokalnie + auth + online). Etap 6 realizujemy tylko jeśli zostanie na to czas/chęć po ukończeniu etapu 5.
 
 ## Kolejne kroki
 Po zatwierdzeniu tego dokumentu: szczegółowy plan implementacyjny (`writing-plans`) dla Etapu 1.
