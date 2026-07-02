@@ -3,9 +3,22 @@ import type {
   ScoreCategory,
   UpperCategory,
   LowerCategory,
+  DiceValue,
 } from '../types/game';
 import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '../types/game';
 import { calculateUpperSum, calculateBonus } from './scoring/upperSection';
+import { upperCategoryScore } from './scoring/upperSection';
+import {
+  pairScore,
+  twoPairScore,
+  threeOfKindScore,
+  fourOfKindScore,
+  smallStraightScore,
+  largeStraightScore,
+  fullHouseScore,
+  chanceScore,
+  yahtzeeScore,
+} from './scoring/combinations';
 
 export function createEmptyScoreCard(): PlayerScoreCard {
   const upper = {} as Record<UpperCategory, number | null>;
@@ -51,4 +64,43 @@ export function calculateTotal(scoreCard: PlayerScoreCard): number {
     0
   );
   return upperSum + bonus + lowerSum;
+}
+
+export const DOUBLE_SCORE_ROLLS_LEFT = 2;
+export const YAHTZEE_BONUS = 50;
+
+const LOWER_SCORERS: Record<LowerCategory, (dice: DiceValue[]) => number> = {
+  pair: pairScore,
+  twoPair: twoPairScore,
+  threeOfKind: threeOfKindScore,
+  fourOfKind: fourOfKindScore,
+  smallStraight: smallStraightScore,
+  largeStraight: largeStraightScore,
+  fullHouse: fullHouseScore,
+  chance: chanceScore,
+  yahtzee: yahtzeeScore,
+};
+
+export function scoreCategory(
+  scoreCard: PlayerScoreCard,
+  category: ScoreCategory,
+  dice: DiceValue[],
+  rollsLeft: number
+): PlayerScoreCard {
+  if (!canScoreCategory(scoreCard, category)) {
+    throw new Error(`Category "${category}" cannot be scored right now`);
+  }
+
+  if (isUpperCategory(category)) {
+    const value = upperCategoryScore(category, dice);
+    return { ...scoreCard, upper: { ...scoreCard.upper, [category]: value } };
+  }
+
+  const raw = LOWER_SCORERS[category](dice);
+  const doubled = rollsLeft === DOUBLE_SCORE_ROLLS_LEFT;
+  let value = doubled ? raw * 2 : raw;
+  if (category === 'yahtzee' && raw > 0) {
+    value += YAHTZEE_BONUS;
+  }
+  return { ...scoreCard, lower: { ...scoreCard.lower, [category]: value } };
 }

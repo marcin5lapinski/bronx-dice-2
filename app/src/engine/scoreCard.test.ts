@@ -5,6 +5,9 @@ import {
   isUpperSectionFilled,
   canScoreCategory,
   calculateTotal,
+  scoreCategory,
+  DOUBLE_SCORE_ROLLS_LEFT,
+  YAHTZEE_BONUS,
 } from './scoreCard';
 
 describe('createEmptyScoreCard', () => {
@@ -110,5 +113,84 @@ describe('calculateTotal', () => {
 
   it('returns 0 for a fully empty score card', () => {
     expect(calculateTotal(createEmptyScoreCard())).toBe(0);
+  });
+});
+
+describe('scoreCategory', () => {
+  function filledUpperCard() {
+    const card = createEmptyScoreCard();
+    card.upper = {
+      aces: 1,
+      twos: 2,
+      threes: 3,
+      fours: 4,
+      fives: 5,
+      sixes: 6,
+    };
+    return card;
+  }
+
+  it('scores an upper category using the dice face value sum', () => {
+    const card = createEmptyScoreCard();
+    const result = scoreCategory(card, 'threes', [3, 3, 1, 2, 5], 3);
+    expect(result.upper.threes).toBe(6);
+  });
+
+  it('does not mutate the input score card', () => {
+    const card = createEmptyScoreCard();
+    scoreCategory(card, 'threes', [3, 3, 1, 2, 5], 3);
+    expect(card.upper.threes).toBeNull();
+  });
+
+  it('throws when the category cannot be scored', () => {
+    const card = createEmptyScoreCard();
+    card.upper.aces = 1;
+    expect(() => scoreCategory(card, 'aces', [1, 1, 1, 1, 1], 3)).toThrow();
+  });
+
+  it('throws when scoring a lower category before the upper section is filled', () => {
+    const card = createEmptyScoreCard();
+    expect(() =>
+      scoreCategory(card, 'chance', [1, 2, 3, 4, 5], 3)
+    ).toThrow();
+  });
+
+  it(`doubles a lower category score when rollsLeft is ${DOUBLE_SCORE_ROLLS_LEFT}`, () => {
+    const card = filledUpperCard();
+    const result = scoreCategory(
+      card,
+      'chance',
+      [1, 2, 3, 4, 5],
+      DOUBLE_SCORE_ROLLS_LEFT
+    );
+    expect(result.lower.chance).toBe(30); // (1+2+3+4+5) * 2
+  });
+
+  it('does not double a lower category score when rollsLeft is not 2', () => {
+    const card = filledUpperCard();
+    const result = scoreCategory(card, 'chance', [1, 2, 3, 4, 5], 1);
+    expect(result.lower.chance).toBe(15);
+  });
+
+  it(`applies the yahtzee +${YAHTZEE_BONUS} bonus without doubling it`, () => {
+    const card = filledUpperCard();
+    const result = scoreCategory(
+      card,
+      'yahtzee',
+      [4, 4, 4, 4, 4],
+      DOUBLE_SCORE_ROLLS_LEFT
+    );
+    expect(result.lower.yahtzee).toBe(4 * 5 * 2 + YAHTZEE_BONUS); // 40 + 50 = 90
+  });
+
+  it('scores yahtzee as 0 with no bonus when the dice do not match', () => {
+    const card = filledUpperCard();
+    const result = scoreCategory(
+      card,
+      'yahtzee',
+      [4, 4, 4, 4, 5],
+      DOUBLE_SCORE_ROLLS_LEFT
+    );
+    expect(result.lower.yahtzee).toBe(0);
   });
 });
