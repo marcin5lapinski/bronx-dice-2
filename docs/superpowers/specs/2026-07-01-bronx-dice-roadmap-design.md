@@ -52,7 +52,12 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 - Stan gry trzymany lokalnie w React (bez backendu).
 - Efekt końcowy: w pełni grywalna wersja offline.
 
-### Etap 3 — Uwierzytelnianie i profil gracza
+### Etap 3 — Oprawa wizualna
+- Design/styl: paleta kolorów, typografia, spójny wygląd komponentów (przyciski, tabela wyników, kości).
+- Stylowanie ekranów zbudowanych w Etapie 2 (`StartScreen`, `DiceTray`, `RollButton`, `ScoreBoard`, `WinnerScreen`) — czysto prezentacyjna zmiana (CSS/markup), bez ruszania logiki gry ani testów silnika.
+- Podstawowy layout dopasowany do trybu lokalnego (gra na jednym urządzeniu, przekazywanym między graczami).
+
+### Etap 4 — Uwierzytelnianie i profil gracza
 - Nowy projekt Firebase (nie kontynuujemy `bronx-dice` z pierwowzoru), konfiguracja SDK.
 - Firebase Auth: dostawcy Google oraz Email/Password.
 - Ekrany: logowanie, rejestracja, „zapomniałem hasła” (reset przez e-mail).
@@ -60,29 +65,29 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 - Dostęp do trybu online wymaga zalogowania; tryb lokalny (hot-seat) pozostaje dostępny bez logowania.
 - Obsługa stanu sesji (utrzymanie zalogowania po odświeżeniu, wylogowanie).
 
-### Etap 4 — Backend Firebase pod rozgrywkę online
+### Etap 5 — Backend Firebase pod rozgrywkę online
 - Firestore jako źródło stanu pokoju gry (gracze, kolejka, kości, wyniki per gracz, faza gry, kod pokoju).
 - Cloud Functions jako jedyna droga zmiany stanu: `createRoom`, `joinRoom`, `rollDice`, `scoreCategory`, `leaveRoom`.
-- Gracze w pokoju identyfikowani przez `uid` z Firebase Auth (Etap 3) zamiast anonimowej sesji.
+- Gracze w pokoju identyfikowani przez `uid` z Firebase Auth (Etap 4) zamiast anonimowej sesji.
 - Firestore Security Rules blokujące bezpośredni zapis stanu gry z klienta (dozwolony tylko odczyt + wywołania Functions).
 
-### Etap 5 — UI trybu online: lobby i rozgrywka na żywo
+### Etap 6 — UI trybu online: lobby i rozgrywka na żywo
 - Tworzenie pokoju / dołączanie kodem, poczekalnia (lista graczy, gotowość, start przez hosta).
-- Lobby pokazuje nazwę i avatar z profilu gracza (Etap 3) zamiast pola do wpisania nicku.
-- Podpięcie planszy gry z Etapu 2 do stanu z Firestore (`onSnapshot`) zamiast lokalnego state — reużycie komponentów UI.
+- Lobby pokazuje nazwę i avatar z profilu gracza (Etap 4) zamiast pola do wpisania nicku.
+- Podpięcie planszy gry z Etapu 2/3 do stanu z Firestore (`onSnapshot`) zamiast lokalnego state — reużycie komponentów UI.
 - Obsługa rozłączenia i ponownego dołączenia gracza w trakcie gry.
 
-### Etap 6 (opcjonalnie, niski priorytet) — Statystyki graczy
+### Etap 7 (opcjonalnie, niski priorytet) — Statystyki graczy
 - Zapis historii rozgrywek (lokalnych i online) do Firestore, powiązanej z kontem gracza.
 - Ekran statystyk: liczba gier, wygrane, historia punktów per gracz.
 
-### Etap 7 — Wdrożenie i dopracowanie
+### Etap 8 — Wdrożenie i dopracowanie
 - Firebase Hosting.
 - Responsywność (telefon/tablet/desktop).
 - Obsługa błędów sieci i rozłączeń.
 - Ewentualnie PWA.
 
-Etapy 1–5 stanowią rdzeń projektu (silnik + lokalnie + auth + online). Etap 6 realizujemy tylko jeśli zostanie na to czas/chęć po ukończeniu etapu 5.
+Etapy 1–6 stanowią rdzeń projektu (silnik + lokalnie + wygląd + auth + online). Etap 7 realizujemy tylko jeśli zostanie na to czas/chęć po ukończeniu etapu 6.
 
 ## Kolejne kroki
 Po zatwierdzeniu tego dokumentu: szczegółowy plan implementacyjny (`writing-plans`) dla Etapu 1.
