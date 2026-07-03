@@ -141,6 +141,14 @@
   width: 100%;
 }
 
+/* The open dropdown list is rendered natively by the browser and does not
+   inherit the semi-transparent panel background, so give its options an
+   explicit dark background/text color to match the theme. */
+.start-screen select option {
+  background: var(--bg);
+  color: var(--text);
+}
+
 .start-screen select:focus,
 .start-screen input:focus {
   outline: none;
