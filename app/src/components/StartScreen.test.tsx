@@ -135,4 +135,65 @@ describe('StartScreen', () => {
 
     expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala']);
   });
+
+  it('disables the drag handles when "Losuj kolejność" is checked', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+
+    expect(
+      screen.getByRole('button', { name: 'Zmień kolejność: Gracz 1' })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Zmień kolejność: Gracz 2' })
+    ).toBeDisabled();
+  });
+
+  it('does not change the visible input order when the checkbox is checked', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+
+    expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola');
+    expect(screen.getByLabelText('Gracz 2')).toHaveValue('Kuba');
+  });
+
+  it('shuffles the names before starting when "Losuj kolejność" is checked', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    renderStartScreen({ onStart });
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    // Fisher-Yates on 2 items with random()=0: i=1, j=floor(0*2)=0, swap(1,0)
+    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola']);
+
+    vi.restoreAllMocks();
+  });
+
+  it('does not shuffle when "Losuj kolejność" is left unchecked', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    renderStartScreen({ onStart });
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba']);
+  });
 });

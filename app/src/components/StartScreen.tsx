@@ -16,7 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../engine/gameState';
 import { useAuth } from '../contexts/AuthContext';
-import { reorderNames, type PlayerNameRow } from '../utils/playerOrder';
+import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/playerOrder';
 
 interface StartScreenProps {
   onStart: (playerNames: string[]) => void;
@@ -85,6 +85,7 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
       value: defaultName(index),
     }))
   );
+  const [randomizeOrder, setRandomizeOrder] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -121,7 +122,10 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
   const canStart = trimmedNames.every((name) => name.length > 0);
 
   const handleStart = () => {
-    onStart(trimmedNames);
+    const finalNames = randomizeOrder
+      ? shufflePlayerOrder(trimmedNames)
+      : trimmedNames;
+    onStart(finalNames);
   };
 
   return (
@@ -152,6 +156,15 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
         ))}
       </select>
 
+      <label className="randomize-order-label">
+        <input
+          type="checkbox"
+          checked={randomizeOrder}
+          onChange={(event) => setRandomizeOrder(event.target.checked)}
+        />
+        Losuj kolejność
+      </label>
+
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <SortableContext
           items={visibleRows.map((row) => row.id)}
@@ -162,7 +175,7 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
               key={row.id}
               row={row}
               label={defaultName(index)}
-              dragDisabled={false}
+              dragDisabled={randomizeOrder}
               onChange={handleNameChange}
             />
           ))}
