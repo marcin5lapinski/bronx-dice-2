@@ -20,6 +20,14 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   { id: 'avatar14', src: '/dice/avatars/avatar14.png' },
   { id: 'avatar15', src: '/dice/avatars/avatar15.png' },
   { id: 'avatar16', src: '/dice/avatars/avatar16.png' },
+  { id: 'avatar17', src: '/dice/avatars/avatar17.png' },
+  { id: 'avatar18', src: '/dice/avatars/avatar18.png' },
+  { id: 'avatar19', src: '/dice/avatars/avatar19.png' },
+  { id: 'avatar20', src: '/dice/avatars/avatar20.png' },
+  { id: 'avatar21', src: '/dice/avatars/avatar21.png' },
+  { id: 'avatar22', src: '/dice/avatars/avatar22.png' },
+  { id: 'avatar23', src: '/dice/avatars/avatar23.png' },
+  { id: 'avatar24', src: '/dice/avatars/avatar24.png' },
 ];
 
 export function avatarSrc(avatarId: string): string {
