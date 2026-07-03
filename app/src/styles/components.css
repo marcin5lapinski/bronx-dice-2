@@ -344,11 +344,15 @@
   padding: 0;
 }
 
+.profile-form button[type='submit'] {
+  margin-top: 25px;
+}
+
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  max-height: 384px;
+  max-height: 480px;
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: thin;
