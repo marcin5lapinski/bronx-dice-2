@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../engine/gameState';
+import { useAuth } from '../contexts/AuthContext';
 
 interface StartScreenProps {
   onStart: (playerNames: string[]) => void;
@@ -11,6 +12,7 @@ function defaultName(index: number): string {
 }
 
 function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
+  const { user } = useAuth();
   const [playerCount, setPlayerCount] = useState(MIN_PLAYERS);
   const [names, setNames] = useState<string[]>(
     Array.from({ length: MIN_PLAYERS }, (_, index) => defaultName(index))
@@ -43,7 +45,7 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
         alt="Bronx Dice"
       />
       <button type="button" onClick={onOpenAuth}>
-        Zaloguj się
+        {user ? 'Profil gracza' : 'Zaloguj się'}
       </button>
       <label htmlFor="player-count">Liczba graczy</label>
       <select
