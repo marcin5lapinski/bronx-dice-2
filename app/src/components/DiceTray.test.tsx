@@ -2,10 +2,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DiceTray from './DiceTray';
+import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
 import type { DiceValue } from '../types/game';
 
 describe('DiceTray', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders 5 disabled placeholders before the first roll', () => {
     render(
       <DiceTray
@@ -22,7 +26,8 @@ describe('DiceTray', () => {
     }
   });
 
-  it('shows the rolled values and enables the dice', () => {
+  it('shows the rolled values and enables the dice once the roll animation settles', () => {
+    vi.useFakeTimers();
     const dice: DiceValue[] = [1, 2, 3, 4, 5];
     render(
       <DiceTray
@@ -31,17 +36,53 @@ describe('DiceTray', () => {
         onToggleHeld={() => {}}
       />
     );
+    act(() => {
+      vi.advanceTimersByTime(ROLL_ANIMATION_MS);
+    });
     const buttons = screen.getAllByRole('button');
-    expect(buttons.map((button) => button.textContent)).toEqual([
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-    ]);
+    expect(
+      buttons.map((button) => button.querySelector('img')?.alt)
+    ).toEqual(['1', '2', '3', '4', '5']);
     for (const button of buttons) {
       expect(button).not.toBeDisabled();
     }
+  });
+
+  it('masks unheld dice behind a placeholder face while rolling', () => {
+    vi.useFakeTimers();
+    const dice: DiceValue[] = [1, 2, 3, 4, 5];
+    render(
+      <DiceTray
+        dice={dice}
+        heldDice={[false, true, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+    const buttons = screen.getAllByRole('button');
+    // Held dice never animate, so they show the real value immediately...
+    expect(buttons[1].querySelector('img')?.src).toContain('die-muted-2');
+    // ...but a die that will be rerolled shows the placeholder face until
+    // the animation settles.
+    expect(buttons[0].querySelector('img')?.alt).toBe('5');
+    expect(buttons[0].querySelector('img')?.src).toContain('die-glow-5');
+  });
+
+  it('uses the glow face for dice that will be rerolled once the roll animation settles', () => {
+    vi.useFakeTimers();
+    const dice: DiceValue[] = [1, 2, 3, 4, 5];
+    render(
+      <DiceTray
+        dice={dice}
+        heldDice={[false, true, false, false, false]}
+        onToggleHeld={() => {}}
+      />
+    );
+    act(() => {
+      vi.advanceTimersByTime(ROLL_ANIMATION_MS);
+    });
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[0].querySelector('img')?.src).toContain('die-glow-1');
+    expect(buttons[1].querySelector('img')?.src).toContain('die-muted-2');
   });
 
   it('calls onToggleHeld with the clicked die index', async () => {

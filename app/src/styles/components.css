@@ -18,24 +18,25 @@
   color: var(--text-dim);
   font-weight: 800;
   font-size: 20px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.die:not(.held):not(:disabled) {
-  background: var(--accent-blue-bg);
-  border: 2px solid var(--accent-blue);
-  box-shadow:
-    0 0 14px var(--accent-blue-glow),
-    inset 0 0 8px rgba(0, 229, 255, 0.15);
-  color: var(--accent-blue);
+/* Once a die shows its face image, the artwork itself carries the
+   border/background/glow for the held vs. active state, so the button
+   underneath drops its own chrome to avoid a double border. */
+.die:not(:disabled) {
+  background: none;
+  border: none;
 }
 
-.die.held {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--panel-border);
-  color: var(--text-dim);
+.die-face {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .die.rolling {
@@ -51,8 +52,11 @@
 
 .score-board th,
 .score-board td {
-  padding: 7px 8px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 8px;
   text-align: left;
+  vertical-align: middle;
   border-bottom: 1px solid var(--panel-border);
 }
 
@@ -74,14 +78,17 @@
 }
 
 .score-board tbody button {
+  box-sizing: border-box;
+  height: 24px;
   color: var(--accent-blue);
   border: 1px solid var(--accent-blue);
   border-radius: 4px;
   box-shadow: 0 0 8px var(--accent-blue-glow);
   font-weight: 800;
   background: transparent;
-  padding: 2px 8px;
+  padding: 0 8px;
   font-family: inherit;
+  line-height: 1;
 }
 
 .score-board .bonus-row td {
@@ -99,7 +106,6 @@
   border-bottom: none;
   color: var(--accent-green);
   font-weight: 800;
-  padding-top: 10px;
 }
 
 @media (max-width: 480px) {

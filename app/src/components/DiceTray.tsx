@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { DiceValue } from '../types/game';
 
-const ROLL_ANIMATION_MS = 1000;
+export const ROLL_ANIMATION_MS = 1000;
+
+// Shown in place of the real face while a die is mid-spin, so the outcome
+// can't be read until the animation settles on the actual rolled value.
+const ROLLING_PLACEHOLDER_FACE: DiceValue = 5;
 
 interface DiceTrayProps {
   dice: DiceValue[];
   heldDice: boolean[];
   onToggleHeld: (index: number) => void;
+}
+
+function diceFaceSrc(value: DiceValue, held: boolean): string {
+  return `/dice/die-${held ? 'muted' : 'glow'}-${value}.png`;
 }
 
 function DiceTray({ dice, heldDice, onToggleHeld }: DiceTrayProps) {
@@ -35,9 +43,12 @@ function DiceTray({ dice, heldDice, onToggleHeld }: DiceTrayProps) {
         if (heldDice[index]) {
           classes.push('held');
         }
-        if (rollingIndices.includes(index)) {
+        const isRolling = rollingIndices.includes(index);
+        if (isRolling) {
           classes.push('rolling');
         }
+        const value = hasBeenRolled ? dice[index] : null;
+        const displayValue = isRolling ? ROLLING_PLACEHOLDER_FACE : value;
         return (
           <button
             key={index}
@@ -47,7 +58,15 @@ function DiceTray({ dice, heldDice, onToggleHeld }: DiceTrayProps) {
             disabled={!hasBeenRolled}
             onClick={() => onToggleHeld(index)}
           >
-            {hasBeenRolled ? dice[index] : '–'}
+            {displayValue !== null ? (
+              <img
+                className="die-face"
+                src={diceFaceSrc(displayValue, heldDice[index])}
+                alt={String(displayValue)}
+              />
+            ) : (
+              '–'
+            )}
           </button>
         );
       })}

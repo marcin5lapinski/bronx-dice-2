@@ -74,16 +74,8 @@ button:disabled {
 @keyframes dice-spin {
   0% {
     transform: rotate(0deg);
-    filter: blur(0);
-  }
-  15% {
-    filter: blur(3px);
-  }
-  85% {
-    filter: blur(3px);
   }
   100% {
-    transform: rotate(740deg);
-    filter: blur(0);
+    transform: rotate(-1080deg);
   }
 }
