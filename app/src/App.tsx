@@ -16,6 +16,11 @@ function App() {
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
   const { user, profile, loading } = useAuth();
 
+  const closeAuth = () => {
+    setAuthOpen(false);
+    setAuthScreen('login');
+  };
+
   if (playerNames) {
     return (
       <GameScreen
@@ -36,7 +41,7 @@ function App() {
           <RegisterScreen
             onSuccess={() => {}}
             onNavigateToLogin={() => setAuthScreen('login')}
-            onCancel={() => setAuthOpen(false)}
+            onCancel={closeAuth}
           />
         );
       }
@@ -44,7 +49,7 @@ function App() {
         return (
           <ForgotPasswordScreen
             onNavigateToLogin={() => setAuthScreen('login')}
-            onCancel={() => setAuthOpen(false)}
+            onCancel={closeAuth}
           />
         );
       }
@@ -53,7 +58,7 @@ function App() {
           onSuccess={() => {}}
           onNavigateToRegister={() => setAuthScreen('register')}
           onNavigateToForgotPassword={() => setAuthScreen('forgot-password')}
-          onCancel={() => setAuthOpen(false)}
+          onCancel={closeAuth}
         />
       );
     }
@@ -63,16 +68,13 @@ function App() {
         <ProfileSetupScreen
           user={user}
           onComplete={() => {}}
-          onCancel={() => setAuthOpen(false)}
+          onCancel={closeAuth}
         />
       );
     }
 
     return (
-      <ProfileScreen
-        onSignedOut={() => setAuthOpen(false)}
-        onBackToLocal={() => setAuthOpen(false)}
-      />
+      <ProfileScreen onSignedOut={closeAuth} onBackToLocal={closeAuth} />
     );
   }
 
