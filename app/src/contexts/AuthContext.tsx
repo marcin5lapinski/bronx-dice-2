@@ -37,12 +37,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (nextUser) {
         setLoading(true);
         const uid = nextUser.uid;
-        getProfile(uid).then((loaded) => {
-          if (latestUidRef.current === uid) {
-            setProfile(loaded);
-            setLoading(false);
-          }
-        });
+        getProfile(uid)
+          .then((loaded) => {
+            if (latestUidRef.current === uid) {
+              setProfile(loaded);
+              setLoading(false);
+            }
+          })
+          .catch(() => {
+            if (latestUidRef.current === uid) {
+              setProfile(null);
+              setLoading(false);
+            }
+          });
       } else {
         setProfile(null);
         setLoading(false);

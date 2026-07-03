@@ -210,6 +210,83 @@ describe('AuthContext', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('stops loading (without hanging) when the profile fetch rejects', async () => {
+    let capturedCallback: ((user: User | null) => void) | undefined;
+    mockSubscribeToAuthState.mockImplementation((callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    mockGetProfile.mockRejectedValue(new Error('permission-denied'));
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>
+    );
+
+    capturedCallback!({ uid: 'uid-1' } as User);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Zalogowano jako (brak profilu)')
+      ).toBeInTheDocument()
+    );
+    expect(screen.queryByText('Ładowanie…')).not.toBeInTheDocument();
+  });
+
+  it('ignores a stale profile fetch that rejects after a newer one resolved', async () => {
+    let capturedCallback: ((user: User | null) => void) | undefined;
+    mockSubscribeToAuthState.mockImplementation((callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const freshProfile: PlayerProfile = {
+      displayName: 'Nowy',
+      avatarId: 'owl',
+      email: 'nowy@example.com',
+      createdAt: 1700000001000,
+    };
+
+    let rejectStale: ((error: Error) => void) | undefined;
+    let resolveFresh: ((profile: PlayerProfile) => void) | undefined;
+
+    mockGetProfile.mockImplementationOnce(
+      () =>
+        new Promise<PlayerProfile>((_resolve, reject) => {
+          rejectStale = reject;
+        })
+    );
+    mockGetProfile.mockImplementationOnce(
+      () =>
+        new Promise<PlayerProfile>((resolve) => {
+          resolveFresh = resolve;
+        })
+    );
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>
+    );
+
+    capturedCallback!({ uid: 'uid-old' } as User);
+    capturedCallback!({ uid: 'uid-new' } as User);
+
+    resolveFresh!(freshProfile);
+    await waitFor(() =>
+      expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument()
+    );
+
+    // The stale request rejects after the newer one already resolved. It
+    // must not clear the profile that is currently displayed.
+    rejectStale!(new Error('permission-denied'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument();
+  });
+
   it('useAuth throws when used outside an AuthProvider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Consumer />)).toThrow(
