@@ -31,6 +31,11 @@ describe('reorderNames', () => {
     const result = reorderNames(rows, 'does-not-exist', 'a');
     expect(result).toEqual(rows);
   });
+
+  it('returns the same array when overId is not found', () => {
+    const result = reorderNames(rows, 'a', 'does-not-exist');
+    expect(result).toEqual(rows);
+  });
 });
 
 describe('shufflePlayerOrder', () => {
