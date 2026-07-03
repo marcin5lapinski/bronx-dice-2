@@ -48,11 +48,11 @@ function ForgotPasswordScreen({
   return (
     <div className="auth-screen">
       <h1>Zresetuj hasło</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <label htmlFor="forgot-password-email">E-mail</label>
         <input
           id="forgot-password-email"
-          type="text"
+          type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
