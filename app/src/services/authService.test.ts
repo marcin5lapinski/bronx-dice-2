@@ -20,7 +20,7 @@ vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: (...args: unknown[]) => mockSignIn(...args),
   createUserWithEmailAndPassword: (...args: unknown[]) => mockCreateUser(...args),
   signInWithPopup: (...args: unknown[]) => mockSignInWithPopup(...args),
-  GoogleAuthProvider: vi.fn().mockImplementation(function() { return this; }),
+  GoogleAuthProvider: vi.fn().mockImplementation(function (this: unknown) { return this; }),
   sendPasswordResetEmail: (...args: unknown[]) => mockSendPasswordResetEmail(...args),
   signOut: (...args: unknown[]) => mockSignOut(...args),
   onAuthStateChanged: (...args: unknown[]) => mockOnAuthStateChanged(...args),
