@@ -19,8 +19,8 @@ describe('ScoreBoard', () => {
         onScore={() => {}}
       />
     );
-    expect(screen.getByText('Asy')).toBeInTheDocument();
-    expect(screen.getByText('Piątka/Generał')).toBeInTheDocument();
+    expect(screen.getByText('Jedynki')).toBeInTheDocument();
+    expect(screen.getByText('5X')).toBeInTheDocument();
     expect(
       screen.getByRole('columnheader', { name: 'Ola' })
     ).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('ScoreBoard', () => {
         onScore={() => {}}
       />
     );
-    const row = screen.getByText('Asy').closest('tr')!;
+    const row = screen.getByText('Jedynki').closest('tr')!;
     expect(row).toHaveTextContent('3');
     expect(row.querySelector('button')).toBeNull();
   });

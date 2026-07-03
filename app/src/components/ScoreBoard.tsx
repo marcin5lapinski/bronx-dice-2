@@ -23,7 +23,7 @@ interface ScoreBoardProps {
 }
 
 const CATEGORY_LABELS: Record<ScoreCategory, string> = {
-  aces: 'Asy',
+  aces: 'Jedynki',
   twos: 'Dwójki',
   threes: 'Trójki',
   fours: 'Czwórki',
@@ -31,13 +31,13 @@ const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   sixes: 'Szóstki',
   pair: 'Para',
   twoPair: '2x Para',
-  threeOfKind: 'Trójka',
-  fourOfKind: 'Czwórka',
+  threeOfKind: '3X',
+  fourOfKind: '4X',
   smallStraight: 'Mały strit',
   largeStraight: 'Duży strit',
   fullHouse: 'Full',
   chance: 'Szansa',
-  yahtzee: 'Piątka/Generał',
+  yahtzee: '5X',
 };
 
 function scoreValue(
