@@ -6,7 +6,7 @@ import StartScreen from './StartScreen';
 
 describe('StartScreen', () => {
   it('renders 2 name inputs by default', () => {
-    render(<StartScreen onStart={() => {}} />);
+    render(<StartScreen onStart={() => {}} onOpenAuth={() => {}} />);
     expect(screen.getByLabelText('Gracz 1')).toBeInTheDocument();
     expect(screen.getByLabelText('Gracz 2')).toBeInTheDocument();
     expect(screen.queryByLabelText('Gracz 3')).not.toBeInTheDocument();
@@ -14,7 +14,7 @@ describe('StartScreen', () => {
 
   it('adds more name inputs when player count increases, preserving existing names', async () => {
     const user = userEvent.setup();
-    render(<StartScreen onStart={() => {}} />);
+    render(<StartScreen onStart={() => {}} onOpenAuth={() => {}} />);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -27,7 +27,7 @@ describe('StartScreen', () => {
 
   it('disables the start button when a name is blank', async () => {
     const user = userEvent.setup();
-    render(<StartScreen onStart={() => {}} />);
+    render(<StartScreen onStart={() => {}} onOpenAuth={() => {}} />);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
 
@@ -39,7 +39,7 @@ describe('StartScreen', () => {
   it('calls onStart with trimmed player names when clicked', async () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
-    render(<StartScreen onStart={onStart} />);
+    render(<StartScreen onStart={onStart} onOpenAuth={() => {}} />);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), '  Ola  ');
@@ -49,5 +49,15 @@ describe('StartScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
     expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba']);
+  });
+
+  it('calls onOpenAuth when the login button is clicked', async () => {
+    const user = userEvent.setup();
+    const onOpenAuth = vi.fn();
+    render(<StartScreen onStart={() => {}} onOpenAuth={onOpenAuth} />);
+
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+
+    expect(onOpenAuth).toHaveBeenCalled();
   });
 });

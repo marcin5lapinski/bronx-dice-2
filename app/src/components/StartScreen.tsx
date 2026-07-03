@@ -3,13 +3,14 @@ import { MIN_PLAYERS, MAX_PLAYERS } from '../engine/gameState';
 
 interface StartScreenProps {
   onStart: (playerNames: string[]) => void;
+  onOpenAuth: () => void;
 }
 
 function defaultName(index: number): string {
   return `Gracz ${index + 1}`;
 }
 
-function StartScreen({ onStart }: StartScreenProps) {
+function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
   const [playerCount, setPlayerCount] = useState(MIN_PLAYERS);
   const [names, setNames] = useState<string[]>(
     Array.from({ length: MIN_PLAYERS }, (_, index) => defaultName(index))
@@ -37,6 +38,9 @@ function StartScreen({ onStart }: StartScreenProps) {
   return (
     <div className="start-screen">
       <h1>Bronx Dice</h1>
+      <button type="button" onClick={onOpenAuth}>
+        Zaloguj się
+      </button>
       <label htmlFor="player-count">Liczba graczy</label>
       <select
         id="player-count"
