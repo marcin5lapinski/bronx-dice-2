@@ -39,7 +39,7 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
     <div className="start-screen">
       <img
         className="app-logo"
-        src="/dice/logos/logo-bd2-1-header.png"
+        src="/dice/logos/logo-bd2-2-header.png"
         alt="Bronx Dice"
       />
       <button type="button" onClick={onOpenAuth}>
