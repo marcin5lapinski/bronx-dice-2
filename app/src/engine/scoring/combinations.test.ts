@@ -28,20 +28,24 @@ describe('countsByValue', () => {
 });
 
 describe('pairScore', () => {
-  it('scores the highest pair when only one pair exists', () => {
+  it('scores the pair when exactly one pair exists', () => {
     expect(pairScore([2, 2, 1, 3, 6])).toBe(4); // 2+2
-  });
-
-  it('picks the higher pair when two pairs exist', () => {
-    expect(pairScore([2, 2, 3, 3, 4])).toBe(6); // highest pair is 3+3
   });
 
   it('returns 0 when there is no pair', () => {
     expect(pairScore([1, 2, 3, 4, 5])).toBe(0);
   });
 
-  it('picks the higher face value even when the lower face has more dice (full house shape)', () => {
-    expect(pairScore([2, 2, 2, 5, 5])).toBe(10);
+  it('returns 0 for three of a kind (not a pair)', () => {
+    expect(pairScore([2, 2, 2, 1, 3])).toBe(0);
+  });
+
+  it('returns 0 for two pair (ambiguous, scored under Two Pair instead)', () => {
+    expect(pairScore([2, 2, 3, 3, 4])).toBe(0);
+  });
+
+  it('returns 0 for a full house (the pair inside it does not count)', () => {
+    expect(pairScore([2, 2, 2, 5, 5])).toBe(0);
   });
 });
 
@@ -58,18 +62,26 @@ describe('twoPairScore', () => {
     expect(twoPairScore([2, 2, 1, 3, 6])).toBe(0);
   });
 
-  it('sums both pairs when a three-of-a-kind hand also contains a pair (full house shape)', () => {
-    expect(twoPairScore([2, 2, 2, 3, 3])).toBe(10);
+  it('returns 0 for a full house (three-of-a-kind hand also containing a pair)', () => {
+    expect(twoPairScore([2, 2, 2, 3, 3])).toBe(0);
   });
 });
 
 describe('threeOfKindScore', () => {
   it('scores three matching dice', () => {
-    expect(threeOfKindScore([3, 3, 3, 5, 5])).toBe(9);
+    expect(threeOfKindScore([3, 3, 3, 5, 4])).toBe(9);
   });
 
   it('returns 0 when nothing has three of a kind', () => {
     expect(threeOfKindScore([2, 2, 3, 3, 4])).toBe(0);
+  });
+
+  it('returns 0 for a full house (three + two, not plain three of a kind)', () => {
+    expect(threeOfKindScore([3, 3, 3, 5, 5])).toBe(0);
+  });
+
+  it('returns 0 for four of a kind', () => {
+    expect(threeOfKindScore([3, 3, 3, 3, 5])).toBe(0);
   });
 });
 
@@ -82,8 +94,8 @@ describe('fourOfKindScore', () => {
     expect(fourOfKindScore([2, 2, 2, 5, 5])).toBe(0);
   });
 
-  it('scores five matching dice as four of a kind too (count >= 4)', () => {
-    expect(fourOfKindScore([6, 6, 6, 6, 6])).toBe(24);
+  it('returns 0 for five matching dice (that is Yahtzee, not four of a kind)', () => {
+    expect(fourOfKindScore([6, 6, 6, 6, 6])).toBe(0);
   });
 });
 
