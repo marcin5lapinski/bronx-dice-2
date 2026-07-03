@@ -351,11 +351,11 @@
 }
 
 .avatar-option {
-  font-size: 24px;
-  padding: 8px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--panel-border);
   border-radius: 4px;
+  aspect-ratio: 1;
 }
 
 .avatar-option.selected {
@@ -363,6 +363,18 @@
   box-shadow: 0 0 10px var(--accent-blue-glow);
 }
 
+.avatar-option-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .profile-avatar {
-  font-size: 48px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-blue);
+  box-shadow: 0 0 16px var(--accent-blue-glow);
+  object-fit: cover;
 }

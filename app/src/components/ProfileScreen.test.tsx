@@ -24,7 +24,7 @@ vi.mock('../contexts/AuthContext', () => ({
 const fakeUser = { uid: 'uid-1' } as User;
 const fakeProfile: PlayerProfile = {
   displayName: 'Ola',
-  avatarId: 'fox',
+  avatarId: 'avatar01',
   email: 'ola@example.com',
   createdAt: 1700000000000,
 };
@@ -44,7 +44,10 @@ describe('ProfileScreen', () => {
     render(<ProfileScreen onSignedOut={() => {}} onBackToLocal={() => {}} />);
     expect(screen.getByText('Ola')).toBeInTheDocument();
     expect(screen.getByText('ola@example.com')).toBeInTheDocument();
-    expect(screen.getByText('🦊')).toBeInTheDocument();
+    expect(screen.getByAltText('Avatar gracza')).toHaveAttribute(
+      'src',
+      '/dice/avatars/avatar01.png'
+    );
   });
 
   it('renders nothing when there is no signed-in user or profile', () => {
@@ -81,7 +84,7 @@ describe('ProfileScreen', () => {
 
     expect(updateProfile).toHaveBeenCalledWith('uid-1', {
       displayName: 'Nowa Ola',
-      avatarId: 'fox',
+      avatarId: 'avatar01',
     });
     expect(refreshProfile).toHaveBeenCalled();
   });

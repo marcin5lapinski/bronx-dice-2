@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AVATAR_OPTIONS, avatarEmoji } from './avatarOptions';
+import { AVATAR_OPTIONS, avatarSrc } from './avatarOptions';
 
 describe('avatarOptions', () => {
   it('has at least 12 distinct avatar options with unique ids', () => {
@@ -8,11 +8,11 @@ describe('avatarOptions', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('avatarEmoji returns the emoji for a known id', () => {
-    expect(avatarEmoji('fox')).toBe('🦊');
+  it('avatarSrc returns the image path for a known id', () => {
+    expect(avatarSrc('avatar01')).toBe('/dice/avatars/avatar01.png');
   });
 
-  it('avatarEmoji falls back to a placeholder for an unknown id', () => {
-    expect(avatarEmoji('does-not-exist')).toBe('❓');
+  it('avatarSrc falls back to the first option for an unknown id', () => {
+    expect(avatarSrc('does-not-exist')).toBe(AVATAR_OPTIONS[0].src);
   });
 });

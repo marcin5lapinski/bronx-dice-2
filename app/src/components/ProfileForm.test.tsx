@@ -19,7 +19,7 @@ describe('ProfileForm', () => {
     );
     expect(screen.getByLabelText('Nazwa wyświetlana')).toHaveValue('Ola');
     expect(
-      screen.getByRole('button', { name: AVATAR_OPTIONS[1].emoji })
+      screen.getByRole('button', { name: `Avatar ${AVATAR_OPTIONS[1].id}` })
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -36,13 +36,13 @@ describe('ProfileForm', () => {
       />
     );
     await user.click(
-      screen.getByRole('button', { name: AVATAR_OPTIONS[2].emoji })
+      screen.getByRole('button', { name: `Avatar ${AVATAR_OPTIONS[2].id}` })
     );
     expect(
-      screen.getByRole('button', { name: AVATAR_OPTIONS[2].emoji })
+      screen.getByRole('button', { name: `Avatar ${AVATAR_OPTIONS[2].id}` })
     ).toHaveAttribute('aria-pressed', 'true');
     expect(
-      screen.getByRole('button', { name: AVATAR_OPTIONS[0].emoji })
+      screen.getByRole('button', { name: `Avatar ${AVATAR_OPTIONS[0].id}` })
     ).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -61,7 +61,7 @@ describe('ProfileForm', () => {
     );
     await user.type(screen.getByLabelText('Nazwa wyświetlana'), '  Ola  ');
     await user.click(
-      screen.getByRole('button', { name: AVATAR_OPTIONS[3].emoji })
+      screen.getByRole('button', { name: `Avatar ${AVATAR_OPTIONS[3].id}` })
     );
     await user.click(screen.getByRole('button', { name: 'Zapisz' }));
     expect(onSubmit).toHaveBeenCalledWith({

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { updateProfile } from '../services/profileService';
 import { signOutUser } from '../services/authService';
 import { authErrorMessage } from '../services/authErrors';
-import { avatarEmoji } from './avatarOptions';
+import { avatarSrc } from './avatarOptions';
 import ProfileForm from './ProfileForm';
 
 interface ProfileScreenProps {
@@ -65,7 +65,11 @@ function ProfileScreen({ onSignedOut, onBackToLocal }: ProfileScreenProps) {
   return (
     <div className="auth-screen">
       <h1>Profil gracza</h1>
-      <p className="profile-avatar">{avatarEmoji(profile.avatarId)}</p>
+      <img
+        className="profile-avatar"
+        src={avatarSrc(profile.avatarId)}
+        alt="Avatar gracza"
+      />
       <p>{profile.displayName}</p>
       <p>{profile.email}</p>
       <button type="button" onClick={() => setEditing(true)}>

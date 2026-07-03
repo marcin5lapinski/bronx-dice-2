@@ -50,9 +50,14 @@ function ProfileForm({
                 'avatar-option' + (option.id === avatarId ? ' selected' : '')
               }
               aria-pressed={option.id === avatarId}
+              aria-label={`Avatar ${option.id}`}
               onClick={() => setAvatarId(option.id)}
             >
-              {option.emoji}
+              <img
+                className="avatar-option-image"
+                src={option.src}
+                alt=""
+              />
             </button>
           ))}
         </div>
