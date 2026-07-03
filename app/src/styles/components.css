@@ -125,6 +125,21 @@
   padding: 20px 0;
 }
 
+.app-logo {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 30px var(--accent-blue-glow);
+}
+
+@media (min-width: 640px) {
+  .app-logo {
+    width: 220px;
+    height: 220px;
+  }
+}
+
 .start-screen label {
   display: block;
   color: var(--text-dim);

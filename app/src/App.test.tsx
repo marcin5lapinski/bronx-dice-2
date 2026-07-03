@@ -37,7 +37,7 @@ function renderApp() {
 describe('App', () => {
   it('shows the start screen first', () => {
     renderApp();
-    expect(screen.getByText('Bronx Dice')).toBeInTheDocument();
+    expect(screen.getByAltText('Bronx Dice')).toBeInTheDocument();
     expect(screen.getByLabelText('Liczba graczy')).toBeInTheDocument();
   });
 
