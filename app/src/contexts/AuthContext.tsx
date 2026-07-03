@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -27,15 +28,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const latestUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthState((nextUser) => {
       setUser(nextUser);
+      latestUidRef.current = nextUser?.uid ?? null;
       if (nextUser) {
         setLoading(true);
-        getProfile(nextUser.uid)
-          .then(setProfile)
-          .finally(() => setLoading(false));
+        const uid = nextUser.uid;
+        getProfile(uid).then((loaded) => {
+          if (latestUidRef.current === uid) {
+            setProfile(loaded);
+            setLoading(false);
+          }
+        });
       } else {
         setProfile(null);
         setLoading(false);

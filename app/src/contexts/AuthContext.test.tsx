@@ -92,6 +92,124 @@ describe('AuthContext', () => {
     expect(mockGetProfile).not.toHaveBeenCalled();
   });
 
+  it('sets loading back to true when a new signed-in user is detected mid-fetch', async () => {
+    let capturedCallback: ((user: User | null) => void) | undefined;
+    mockSubscribeToAuthState.mockImplementation((callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const profileA: PlayerProfile = {
+      displayName: 'Ala',
+      avatarId: 'fox',
+      email: 'ala@example.com',
+      createdAt: 1700000000000,
+    };
+    const profileB: PlayerProfile = {
+      displayName: 'Basia',
+      avatarId: 'owl',
+      email: 'basia@example.com',
+      createdAt: 1700000001000,
+    };
+
+    let resolveSecond: ((profile: PlayerProfile) => void) | undefined;
+    mockGetProfile.mockImplementationOnce(() => Promise.resolve(profileA));
+    mockGetProfile.mockImplementationOnce(
+      () =>
+        new Promise<PlayerProfile>((resolve) => {
+          resolveSecond = resolve;
+        })
+    );
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>
+    );
+
+    capturedCallback!({ uid: 'uid-a' } as User);
+
+    await waitFor(() =>
+      expect(screen.getByText('Zalogowano jako Ala')).toBeInTheDocument()
+    );
+
+    capturedCallback!({ uid: 'uid-b' } as User);
+
+    await waitFor(() =>
+      expect(screen.getByText('Ładowanie…')).toBeInTheDocument()
+    );
+
+    resolveSecond!(profileB);
+
+    await waitFor(() =>
+      expect(screen.getByText('Zalogowano jako Basia')).toBeInTheDocument()
+    );
+  });
+
+  it('ignores a stale profile fetch that resolves after a newer one', async () => {
+    let capturedCallback: ((user: User | null) => void) | undefined;
+    mockSubscribeToAuthState.mockImplementation((callback) => {
+      capturedCallback = callback;
+      return () => {};
+    });
+
+    const staleProfile: PlayerProfile = {
+      displayName: 'Stary',
+      avatarId: 'fox',
+      email: 'stary@example.com',
+      createdAt: 1700000000000,
+    };
+    const freshProfile: PlayerProfile = {
+      displayName: 'Nowy',
+      avatarId: 'owl',
+      email: 'nowy@example.com',
+      createdAt: 1700000001000,
+    };
+
+    let resolveStale: ((profile: PlayerProfile) => void) | undefined;
+    let resolveFresh: ((profile: PlayerProfile) => void) | undefined;
+
+    mockGetProfile.mockImplementationOnce(
+      () =>
+        new Promise<PlayerProfile>((resolve) => {
+          resolveStale = resolve;
+        })
+    );
+    mockGetProfile.mockImplementationOnce(
+      () =>
+        new Promise<PlayerProfile>((resolve) => {
+          resolveFresh = resolve;
+        })
+    );
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>
+    );
+
+    // Two signed-in users detected in quick succession (e.g. rapid account
+    // switch or two auth events during session restore).
+    capturedCallback!({ uid: 'uid-old' } as User);
+    capturedCallback!({ uid: 'uid-new' } as User);
+
+    // The newer request resolves first...
+    resolveFresh!(freshProfile);
+    await waitFor(() =>
+      expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument()
+    );
+
+    // ...then the older, stale request resolves after it. It must not
+    // overwrite the newer profile that is already displayed.
+    resolveStale!(staleProfile);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Zalogowano jako Stary')
+    ).not.toBeInTheDocument();
+  });
+
   it('useAuth throws when used outside an AuthProvider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Consumer />)).toThrow(
