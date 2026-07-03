@@ -396,11 +396,16 @@
   width: 32px;
   height: 32px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: transparent;
   border: 1px solid var(--panel-border);
   color: var(--text-dim);
   border-radius: 4px;
   font-size: 16px;
+  line-height: 1;
   cursor: grab;
   touch-action: none;
 }
@@ -410,8 +415,9 @@
   cursor: not-allowed;
 }
 
-.randomize-order-label {
+.start-screen .randomize-order-label {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -419,4 +425,8 @@
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.start-screen .randomize-order-label input {
+  width: auto;
 }
