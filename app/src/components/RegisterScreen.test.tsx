@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FirebaseError } from 'firebase/app';
@@ -12,6 +12,10 @@ vi.mock('../services/authService', () => ({
 }));
 
 describe('RegisterScreen', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
