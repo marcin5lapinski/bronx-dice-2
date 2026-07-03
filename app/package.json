@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "emulators": "firebase emulators:start"
   },
   "dependencies": {
     "firebase": "^12.15.0",
@@ -23,6 +24,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "firebase-tools": "^15.22.4",
     "jsdom": "^29.1.1",
     "oxlint": "^1.71.0",
     "prettier": "^3.9.4",
