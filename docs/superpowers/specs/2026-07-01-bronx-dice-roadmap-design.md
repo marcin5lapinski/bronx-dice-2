@@ -20,7 +20,7 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 - **Zasada własna #2:** jeśli gracz zapisuje kategorię z dolnej sekcji po pierwszym rzucie w turze (zostały mu jeszcze 2 rzuty, tzn. `rollsLeft === 2` w momencie zapisu), wynik tej kategorii jest podwajany. Premiuje szybkie/odważne decyzje.
 - Piątka/Generał (5 tych samych oczek) daje sumę oczek + 50 pkt (podwojenie sumy działa tak samo jak wyżej: suma × 2 + 50, jeśli zapisane po pierwszym rzucie).
 - Wygrywa gracz z najwyższym wynikiem końcowym (`total`).
-- Znane błędy w pierwowzorze do naprawienia przy przepisywaniu: wykrywanie Pary / 2x Pary / Trójki / Fulla używa tego samego uproszczonego sprawdzenia duplikatów w tablicy kości i nie odróżnia poprawnie tych kombinacji.
+- **Zasada własna #3 (skorygowano wcześniejszą błędną ocenę):** kategorie Para / 2x Para / Trójka(3X) / Czwórka(4X) / Full wzajemnie się wykluczają na podstawie dokładnego układu kości, nie samego progu liczby duplikatów — np. rzut 3x taka sama wartość liczy się tylko jako 3X (Para = 0), a Full (3+2) liczy się tylko jako Full (Para i 3X = 0 dla tego rzutu). To jest zachowanie pierwowzoru i jest zamierzone, nie błąd — pierwotna ocena w tym dokumencie (etap 1), że pierwowzór "nie odróżnia poprawnie tych kombinacji", była nietrafiona; jedyna faktyczna niespójność w pierwowzorze była w porównaniu Czwórki z 2x Parą, co silnik poprawnie rozróżnia.
 
 ## Kluczowe decyzje architektoniczne
 

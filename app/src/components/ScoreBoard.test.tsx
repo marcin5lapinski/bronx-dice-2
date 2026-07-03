@@ -19,8 +19,8 @@ describe('ScoreBoard', () => {
         onScore={() => {}}
       />
     );
-    expect(screen.getByText('Asy')).toBeInTheDocument();
-    expect(screen.getByText('Piątka/Generał')).toBeInTheDocument();
+    expect(screen.getByText('Jedynki')).toBeInTheDocument();
+    expect(screen.getByText('5X')).toBeInTheDocument();
     expect(
       screen.getByRole('columnheader', { name: 'Ola' })
     ).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('ScoreBoard', () => {
         onScore={() => {}}
       />
     );
-    const row = screen.getByText('Asy').closest('tr')!;
+    const row = screen.getByText('Jedynki').closest('tr')!;
     expect(row).toHaveTextContent('3');
     expect(row.querySelector('button')).toBeNull();
   });
@@ -151,5 +151,74 @@ describe('ScoreBoard', () => {
     );
     const row = screen.getByText('Suma').closest('tr')!;
     expect(row).toHaveTextContent('3');
+  });
+});
+
+describe('bonus row', () => {
+  it('shows nothing when the bonus has not been earned', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={[]}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    const row = screen.getByText('Bonus').closest('tr')!;
+    const cells = row.querySelectorAll('td');
+    expect(cells[1]).toHaveTextContent('');
+    expect(cells[2]).toHaveTextContent('');
+  });
+
+  it('shows 50 with the bonus-earned class when the upper section bonus is achieved', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    state.scoreCards[state.players[0].id].upper = {
+      aces: 3,
+      twos: 6,
+      threes: 9,
+      fours: 12,
+      fives: 15,
+      sixes: 18,
+    }; // sum = 63 -> bonus earned
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={[]}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    const row = screen.getByText('Bonus').closest('tr')!;
+    const cells = row.querySelectorAll('td');
+    expect(cells[1]).toHaveTextContent('50');
+    expect(cells[1]).toHaveClass('bonus-earned');
+    expect(cells[2]).toHaveTextContent('');
+  });
+});
+
+describe('current player column', () => {
+  it("marks the current player's header cell with current-player-col", () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={[]}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    expect(screen.getByRole('columnheader', { name: 'Ola' })).toHaveClass(
+      'current-player-col'
+    );
+    expect(
+      screen.getByRole('columnheader', { name: 'Kuba' })
+    ).not.toHaveClass('current-player-col');
   });
 });

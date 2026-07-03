@@ -1,0 +1,254 @@
+/* Component-specific styles. Each section below is added by its own task
+   in docs/superpowers/plans/2026-07-02-etap-3-oprawa-wizualna.md. */
+
+/* DiceTray */
+.dice-tray {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.die {
+  width: var(--die-size);
+  height: var(--die-size);
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  font-weight: 800;
+  font-size: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Once a die shows its face image, the artwork itself carries the
+   border/background/glow for the held vs. active state, so the button
+   underneath drops its own chrome to avoid a double border. */
+.die:not(:disabled) {
+  background: none;
+  border: none;
+}
+
+.die-face {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.die.rolling {
+  animation: dice-spin 1s ease-out;
+}
+
+/* ScoreBoard */
+.score-board {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.score-board th,
+.score-board td {
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.score-board th {
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.score-board th:not(:first-child),
+.score-board td:not(:first-child) {
+  text-align: center;
+}
+
+.score-board .current-player-col {
+  background: rgba(0, 229, 255, 0.03);
+}
+
+.score-board tbody button {
+  box-sizing: border-box;
+  height: 24px;
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--accent-blue-glow);
+  font-weight: 800;
+  background: transparent;
+  padding: 0 8px;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.score-board .bonus-row td {
+  background: rgba(57, 255, 20, 0.03);
+}
+
+.score-board .bonus-earned {
+  color: var(--accent-green);
+  font-weight: 800;
+  text-shadow: 0 0 6px var(--accent-green-glow);
+}
+
+.score-board .total-row td {
+  border-top: 2px solid var(--panel-border);
+  border-bottom: none;
+  color: var(--accent-green);
+  font-weight: 800;
+}
+
+@media (max-width: 480px) {
+  .score-board {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* StartScreen */
+.start-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.start-screen label {
+  display: block;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.start-screen select,
+.start-screen input {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* The open dropdown list is rendered natively by the browser and does not
+   inherit the semi-transparent panel background, so give its options an
+   explicit dark background/text color to match the theme. */
+.start-screen select option {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.start-screen select:focus,
+.start-screen input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue-glow);
+}
+
+.start-screen button {
+  background: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green-glow);
+  border-radius: 4px;
+  padding: 12px 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.start-screen button:disabled {
+  border-color: var(--panel-border);
+  color: var(--text-dim);
+  box-shadow: none;
+  background: transparent;
+}
+
+/* RollButton */
+.roll-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.roll-button button {
+  background: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green-glow);
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.roll-button button:disabled {
+  border-color: var(--panel-border);
+  color: var(--text-dim);
+  box-shadow: none;
+  background: transparent;
+}
+
+.roll-button p {
+  color: var(--text-dim);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* WinnerScreen */
+.winner-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.winner-screen p {
+  color: var(--accent-blue);
+  font-size: 18px;
+  text-shadow: 0 0 8px var(--accent-blue-glow);
+}
+
+.winner-screen button {
+  background: var(--accent-green-bg);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green-glow);
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+/* GameScreen */
+.game-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

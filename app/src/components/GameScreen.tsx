@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createGameState } from '../engine/gameState';
 import {
   rollInTurn,
@@ -8,7 +8,7 @@ import {
   getWinners,
 } from '../engine/turn';
 import type { GameState, ScoreCategory } from '../types/game';
-import DiceTray from './DiceTray';
+import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
 import RollButton from './RollButton';
 import ScoreBoard from './ScoreBoard';
 import WinnerScreen from './WinnerScreen';
@@ -22,6 +22,18 @@ function GameScreen({ playerNames, onPlayAgain }: GameScreenProps) {
   const [state, setState] = useState<GameState>(() =>
     createGameState(playerNames)
   );
+  // While true, the dice are still mid-animation: ScoreBoard's clickable
+  // score previews are hidden so the player can't read the roll's outcome
+  // in the table before the dice visually settle.
+  const [isRolling, setIsRolling] = useState(false);
+
+  useEffect(() => {
+    if (!isRolling) {
+      return;
+    }
+    const timer = setTimeout(() => setIsRolling(false), ROLL_ANIMATION_MS);
+    return () => clearTimeout(timer);
+  }, [isRolling]);
 
   if (isGameOver(state)) {
     return (
@@ -47,13 +59,16 @@ function GameScreen({ playerNames, onPlayAgain }: GameScreenProps) {
       />
       <RollButton
         rollsLeft={state.rollsLeft}
-        onRoll={() => setState((current) => rollInTurn(current))}
+        onRoll={() => {
+          setState((current) => rollInTurn(current));
+          setIsRolling(true);
+        }}
       />
       <ScoreBoard
         players={state.players}
         scoreCards={state.scoreCards}
         currentPlayerId={currentPlayer.id}
-        dice={state.dice}
+        dice={isRolling ? [] : state.dice}
         rollsLeft={state.rollsLeft}
         onScore={(category: ScoreCategory) =>
           setState((current) => applyScore(current, category))
