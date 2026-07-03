@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { User } from 'firebase/auth';
@@ -34,6 +34,10 @@ function renderStartScreen(
 }
 
 describe('StartScreen', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders 2 name inputs by default', () => {
     renderStartScreen();
     expect(screen.getByLabelText('Gracz 1')).toBeInTheDocument();
@@ -179,8 +183,6 @@ describe('StartScreen', () => {
 
     // Fisher-Yates on 2 items with random()=0: i=1, j=floor(0*2)=0, swap(1,0)
     expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola']);
-
-    vi.restoreAllMocks();
   });
 
   it('does not shuffle when "Losuj kolejność" is left unchecked', async () => {
