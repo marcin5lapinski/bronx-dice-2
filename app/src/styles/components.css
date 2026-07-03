@@ -379,3 +379,33 @@
   box-shadow: 0 0 16px var(--accent-blue-glow);
   object-fit: cover;
 }
+
+/* StartScreen player rows (drag & drop) */
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-row-field {
+  flex: 1;
+  text-align: left;
+}
+
+.player-row-handle {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.player-row-handle:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

@@ -106,4 +106,33 @@ describe('StartScreen', () => {
       screen.queryByRole('button', { name: 'Zaloguj się' })
     ).not.toBeInTheDocument();
   });
+
+  it('renders a drag handle for each player row, labeled by position', () => {
+    renderStartScreen();
+
+    expect(
+      screen.getByRole('button', { name: 'Zmień kolejność: Gracz 1' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Zmień kolejność: Gracz 2' })
+    ).toBeInTheDocument();
+  });
+
+  it('reorders rows and their labels when the underlying order changes', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    renderStartScreen({ onStart });
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.selectOptions(screen.getByLabelText('Liczba graczy'), '3');
+    await user.clear(screen.getByLabelText('Gracz 3'));
+    await user.type(screen.getByLabelText('Gracz 3'), 'Ala');
+
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala']);
+  });
 });

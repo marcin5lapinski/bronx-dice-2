@@ -1,6 +1,22 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { MIN_PLAYERS, MAX_PLAYERS } from '../engine/gameState';
 import { useAuth } from '../contexts/AuthContext';
+import { reorderNames, type PlayerNameRow } from '../utils/playerOrder';
 
 interface StartScreenProps {
   onStart: (playerNames: string[]) => void;
@@ -11,31 +27,102 @@ function defaultName(index: number): string {
   return `Gracz ${index + 1}`;
 }
 
+interface PlayerRowFieldProps {
+  row: PlayerNameRow;
+  label: string;
+  dragDisabled: boolean;
+  onChange: (id: string, value: string) => void;
+}
+
+function PlayerRowField({
+  row,
+  label,
+  dragDisabled,
+  onChange,
+}: PlayerRowFieldProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: row.id, disabled: dragDisabled });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div className="player-row" ref={setNodeRef} style={style}>
+      <button
+        type="button"
+        className="player-row-handle"
+        aria-label={`Zmień kolejność: ${label}`}
+        disabled={dragDisabled}
+        {...attributes}
+        {...listeners}
+      >
+        ⠿
+      </button>
+      <div className="player-row-field">
+        <label htmlFor={`player-name-${row.id}`}>{label}</label>
+        <input
+          id={`player-name-${row.id}`}
+          type="text"
+          value={row.value}
+          onChange={(event) => onChange(row.id, event.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
   const { user } = useAuth();
+  const nextRowId = useRef(0);
+  const createRowId = () => `player-row-${nextRowId.current++}`;
+
   const [playerCount, setPlayerCount] = useState(MIN_PLAYERS);
-  const [names, setNames] = useState<string[]>(
-    Array.from({ length: MIN_PLAYERS }, (_, index) => defaultName(index))
+  const [rows, setRows] = useState<PlayerNameRow[]>(() =>
+    Array.from({ length: MIN_PLAYERS }, (_, index) => ({
+      id: createRowId(),
+      value: defaultName(index),
+    }))
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
-    setNames((current) =>
-      Array.from(
-        { length: count },
-        (_, index) => current[index] ?? defaultName(index)
-      )
+    setRows((current) =>
+      Array.from({ length: count }, (_, index) => {
+        const existing = current[index];
+        return existing ?? { id: createRowId(), value: defaultName(index) };
+      })
     );
   };
 
-  const handleNameChange = (index: number, value: string) => {
-    setNames((current) =>
-      current.map((name, i) => (i === index ? value : name))
+  const handleNameChange = (id: string, value: string) => {
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, value } : row))
     );
   };
 
-  const trimmedNames = names.slice(0, playerCount).map((name) => name.trim());
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setRows((current) =>
+      reorderNames(current, String(active.id), over ? String(over.id) : null)
+    );
+  };
+
+  const visibleRows = rows.slice(0, playerCount);
+  const trimmedNames = visibleRows.map((row) => row.value.trim());
   const canStart = trimmedNames.every((name) => name.length > 0);
+
+  const handleStart = () => {
+    onStart(trimmedNames);
+  };
 
   return (
     <div className="start-screen">
@@ -65,22 +152,27 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
         ))}
       </select>
 
-      {trimmedNames.map((_, index) => (
-        <div key={index}>
-          <label htmlFor={`player-name-${index}`}>{defaultName(index)}</label>
-          <input
-            id={`player-name-${index}`}
-            type="text"
-            value={names[index]}
-            onChange={(event) => handleNameChange(index, event.target.value)}
-          />
-        </div>
-      ))}
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={visibleRows.map((row) => row.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {visibleRows.map((row, index) => (
+            <PlayerRowField
+              key={row.id}
+              row={row}
+              label={defaultName(index)}
+              dragDisabled={false}
+              onChange={handleNameChange}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
 
       <button
         type="button"
         disabled={!canStart}
-        onClick={() => onStart(trimmedNames)}
+        onClick={handleStart}
       >
         Rozpocznij grę
       </button>
