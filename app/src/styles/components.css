@@ -427,6 +427,40 @@
   letter-spacing: 1px;
 }
 
-.start-screen .randomize-order-label input {
-  width: auto;
+.start-screen .randomize-order-label input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.start-screen .randomize-order-label input[type='checkbox']:checked {
+  border-color: var(--accent-green);
+  background: var(--accent-green-bg);
+  box-shadow: 0 0 8px var(--accent-green-glow);
+}
+
+.start-screen .randomize-order-label input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--accent-green);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.start-screen .randomize-order-label input[type='checkbox']:focus-visible {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue-glow);
 }
