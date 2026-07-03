@@ -9,9 +9,14 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProfileSetupScreenProps {
   user: User;
   onComplete: () => void;
+  onCancel: () => void;
 }
 
-function ProfileSetupScreen({ user, onComplete }: ProfileSetupScreenProps) {
+function ProfileSetupScreen({
+  user,
+  onComplete,
+  onCancel,
+}: ProfileSetupScreenProps) {
   const { refreshProfile } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +53,9 @@ function ProfileSetupScreen({ user, onComplete }: ProfileSetupScreenProps) {
         error={error}
         onSubmit={handleSubmit}
       />
+      <button type="button" onClick={onCancel}>
+        Wróć do gry lokalnej
+      </button>
     </div>
   );
 }

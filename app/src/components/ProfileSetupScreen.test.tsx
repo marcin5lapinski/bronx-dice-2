@@ -35,7 +35,13 @@ describe('ProfileSetupScreen', () => {
       loading: false,
       refreshProfile: vi.fn(),
     });
-    render(<ProfileSetupScreen user={fakeUser} onComplete={() => {}} />);
+    render(
+      <ProfileSetupScreen
+        user={fakeUser}
+        onComplete={() => {}}
+        onCancel={() => {}}
+      />
+    );
     expect(screen.getByLabelText('Nazwa wyświetlana')).toHaveValue('Ola G');
   });
 
@@ -56,7 +62,13 @@ describe('ProfileSetupScreen', () => {
     });
     const onComplete = vi.fn();
 
-    render(<ProfileSetupScreen user={fakeUser} onComplete={onComplete} />);
+    render(
+      <ProfileSetupScreen
+        user={fakeUser}
+        onComplete={onComplete}
+        onCancel={() => {}}
+      />
+    );
     await user.click(screen.getByRole('button', { name: 'Zapisz profil' }));
 
     expect(createProfile).toHaveBeenCalledWith('uid-1', {
@@ -80,7 +92,13 @@ describe('ProfileSetupScreen', () => {
       new FirebaseError('auth/network-request-failed', 'offline')
     );
 
-    render(<ProfileSetupScreen user={fakeUser} onComplete={() => {}} />);
+    render(
+      <ProfileSetupScreen
+        user={fakeUser}
+        onComplete={() => {}}
+        onCancel={() => {}}
+      />
+    );
     await user.click(screen.getByRole('button', { name: 'Zapisz profil' }));
 
     expect(
@@ -88,5 +106,29 @@ describe('ProfileSetupScreen', () => {
         'Brak połączenia. Sprawdź internet i spróbuj ponownie.'
       )
     ).toBeInTheDocument();
+  });
+
+  it('calls onCancel when the return-to-local-play button is clicked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(useAuth).mockReturnValue({
+      user: fakeUser,
+      profile: null,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    const onCancel = vi.fn();
+
+    render(
+      <ProfileSetupScreen
+        user={fakeUser}
+        onComplete={() => {}}
+        onCancel={onCancel}
+      />
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Wróć do gry lokalnej' })
+    );
+
+    expect(onCancel).toHaveBeenCalled();
   });
 });

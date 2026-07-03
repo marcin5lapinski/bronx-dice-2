@@ -59,7 +59,13 @@ function App() {
     }
 
     if (!profile) {
-      return <ProfileSetupScreen user={user} onComplete={() => {}} />;
+      return (
+        <ProfileSetupScreen
+          user={user}
+          onComplete={() => {}}
+          onCancel={() => setAuthOpen(false)}
+        />
+      );
     }
 
     return (
