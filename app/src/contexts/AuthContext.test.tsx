@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import type { User } from 'firebase/auth';
 import { AuthProvider, useAuth } from './AuthContext';
 import type { PlayerProfile } from '../types/auth';
@@ -63,7 +63,9 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    capturedCallback!({ uid: 'uid-1' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-1' } as User);
+    });
 
     await waitFor(() =>
       expect(screen.getByText('Zalogowano jako Ola')).toBeInTheDocument()
@@ -84,7 +86,9 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    capturedCallback!(null);
+    act(() => {
+      capturedCallback!(null);
+    });
 
     await waitFor(() =>
       expect(screen.getByText('Brak użytkownika')).toBeInTheDocument()
@@ -127,19 +131,25 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    capturedCallback!({ uid: 'uid-a' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-a' } as User);
+    });
 
     await waitFor(() =>
       expect(screen.getByText('Zalogowano jako Ala')).toBeInTheDocument()
     );
 
-    capturedCallback!({ uid: 'uid-b' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-b' } as User);
+    });
 
     await waitFor(() =>
       expect(screen.getByText('Ładowanie…')).toBeInTheDocument()
     );
 
-    resolveSecond!(profileB);
+    await act(async () => {
+      resolveSecond!(profileB);
+    });
 
     await waitFor(() =>
       expect(screen.getByText('Zalogowano jako Basia')).toBeInTheDocument()
@@ -190,19 +200,25 @@ describe('AuthContext', () => {
 
     // Two signed-in users detected in quick succession (e.g. rapid account
     // switch or two auth events during session restore).
-    capturedCallback!({ uid: 'uid-old' } as User);
-    capturedCallback!({ uid: 'uid-new' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-old' } as User);
+      capturedCallback!({ uid: 'uid-new' } as User);
+    });
 
     // The newer request resolves first...
-    resolveFresh!(freshProfile);
+    await act(async () => {
+      resolveFresh!(freshProfile);
+    });
     await waitFor(() =>
       expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument()
     );
 
     // ...then the older, stale request resolves after it. It must not
     // overwrite the newer profile that is already displayed.
-    resolveStale!(staleProfile);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      resolveStale!(staleProfile);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
 
     expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument();
     expect(
@@ -225,7 +241,9 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    capturedCallback!({ uid: 'uid-1' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-1' } as User);
+    });
 
     await waitFor(() =>
       expect(
@@ -271,18 +289,24 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    capturedCallback!({ uid: 'uid-old' } as User);
-    capturedCallback!({ uid: 'uid-new' } as User);
+    act(() => {
+      capturedCallback!({ uid: 'uid-old' } as User);
+      capturedCallback!({ uid: 'uid-new' } as User);
+    });
 
-    resolveFresh!(freshProfile);
+    await act(async () => {
+      resolveFresh!(freshProfile);
+    });
     await waitFor(() =>
       expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument()
     );
 
     // The stale request rejects after the newer one already resolved. It
     // must not clear the profile that is currently displayed.
-    rejectStale!(new Error('permission-denied'));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      rejectStale!(new Error('permission-denied'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
 
     expect(screen.getByText('Zalogowano jako Nowy')).toBeInTheDocument();
   });
