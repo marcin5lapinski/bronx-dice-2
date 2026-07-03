@@ -373,6 +373,7 @@
 .profile-avatar {
   width: 96px;
   height: 96px;
+  margin: 0 auto;
   border-radius: 50%;
   border: 2px solid var(--accent-blue);
   box-shadow: 0 0 16px var(--accent-blue-glow);
