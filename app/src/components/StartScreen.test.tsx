@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { User } from 'firebase/auth';
 import StartScreen from './StartScreen';
 import { AuthProvider } from '../contexts/AuthContext';
 import { subscribeToAuthState } from '../services/authService';
+import { getProfile } from '../services/profileService';
 
 vi.mock('../services/authService', () => ({
   subscribeToAuthState: vi
@@ -197,5 +198,55 @@ describe('StartScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
     expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba']);
+  });
+
+  it('auto-fills "Gracz 1" with the signed-in player\'s display name', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValueOnce({
+      displayName: 'Ola Nick',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    });
+
+    renderStartScreen();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
+    );
+  });
+
+  it('stops syncing "Gracz 1" once the player edits it by hand', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValueOnce({
+      displayName: 'Ola Nick',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    });
+
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
+    );
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Custom');
+
+    expect(screen.getByLabelText('Gracz 1')).toHaveValue('Custom');
+  });
+
+  it('does not touch "Gracz 1" when signed out', () => {
+    renderStartScreen();
+
+    expect(screen.getByLabelText('Gracz 1')).toHaveValue('Gracz 1');
   });
 });

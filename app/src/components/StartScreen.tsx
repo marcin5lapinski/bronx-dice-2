@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   KeyboardSensor,
@@ -74,7 +74,7 @@ function PlayerRowField({
 }
 
 function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const nextRowId = useRef(0);
   const createRowId = () => `player-row-${nextRowId.current++}`;
 
@@ -85,6 +85,7 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
       value: defaultName(index),
     }))
   );
+  const syncedRowId = useRef<string | null>(rows[0].id);
   const [randomizeOrder, setRandomizeOrder] = useState(false);
 
   const sensors = useSensors(
@@ -93,6 +94,17 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    if (!syncedRowId.current || !user || !profile) {
+      return;
+    }
+    const rowId = syncedRowId.current;
+    const nickname = profile.displayName;
+    setRows((current) =>
+      current.map((row) => (row.id === rowId ? { ...row, value: nickname } : row))
+    );
+  }, [user, profile]);
 
   const handlePlayerCountChange = (count: number) => {
     setPlayerCount(count);
@@ -105,6 +117,9 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
   };
 
   const handleNameChange = (id: string, value: string) => {
+    if (id === syncedRowId.current) {
+      syncedRowId.current = null;
+    }
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, value } : row))
     );
