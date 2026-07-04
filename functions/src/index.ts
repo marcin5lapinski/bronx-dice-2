@@ -7,3 +7,4 @@ export { startGame } from './rooms/startGame';
 export { rollDice } from './rooms/rollDice';
 export { toggleHeldDie } from './rooms/toggleHeldDie';
 export { scoreCategory } from './rooms/scoreCategory';
+export { leaveRoom } from './rooms/leaveRoom';
