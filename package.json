@@ -4,9 +4,13 @@
   "version": "0.0.0",
   "workspaces": [
     "app",
+    "functions",
     "packages/*"
   ],
   "scripts": {
-    "build:engine": "npm run build --workspace=packages/game-engine"
+    "build:engine": "npm run build --workspace=packages/game-engine",
+    "emulators": "firebase emulators:start",
+    "test:functions-integration": "firebase emulators:exec --only firestore \"npm run test:integration --workspace=functions\"",
+    "test:rules": "firebase emulators:exec --only firestore \"npm run test:rules --workspace=app\""
   }
 }
