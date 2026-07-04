@@ -4,12 +4,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createEmptyScoreCard } from '@bronx-dice/game-engine';
 import OnlineGameScreen from './OnlineGameScreen';
-import {
-  rollDice,
-  toggleHeldDie,
-  scoreCategory,
-  handleTurnTimeout,
-} from '../services/roomService';
+import { rollDice, handleTurnTimeout } from '../services/roomService';
 import type { RoomDocument } from '../types/room';
 
 vi.mock('../services/roomService', () => ({

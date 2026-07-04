@@ -16,8 +16,9 @@ interface RoomBase {
   updatedAt: Timestamp;
 }
 
+type RoomGameState = Omit<GameState, 'players'> & { players: RoomPlayer[] };
+
 export type RoomDocument =
   | (RoomBase & { phase: 'lobby'; players: RoomPlayer[] })
-  | (RoomBase & { phase: 'playing' | 'finished' } & GameState & {
-        turnStartedAt: Timestamp;
-      });
+  | (RoomBase & { phase: 'playing' } & RoomGameState & { turnStartedAt: Timestamp })
+  | (RoomBase & { phase: 'finished' } & RoomGameState & { turnStartedAt: Timestamp });

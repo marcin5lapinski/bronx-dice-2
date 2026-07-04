@@ -6,59 +6,98 @@ import RegisterScreen from './components/RegisterScreen';
 import ForgotPasswordScreen from './components/ForgotPasswordScreen';
 import ProfileSetupScreen from './components/ProfileSetupScreen';
 import ProfileScreen from './components/ProfileScreen';
+import OnlineMenuScreen from './components/OnlineMenuScreen';
+import OnlineRoomScreen from './components/OnlineRoomScreen';
 import { useAuth } from './contexts/AuthContext';
 
-type AuthScreen = 'login' | 'register' | 'forgot-password';
+const ONLINE_ROOM_STORAGE_KEY = 'bronxDice.onlineRoomId';
+
+type AuthScreenName = 'login' | 'register' | 'forgot-password';
+
+type Screen =
+  | { kind: 'local-start' }
+  | { kind: 'local-game'; playerNames: string[] }
+  | { kind: 'auth-gate'; authScreen: AuthScreenName }
+  | { kind: 'profile' }
+  | { kind: 'online-room'; roomId: string };
+
+function initialScreen(): Screen {
+  const storedRoomId = localStorage.getItem(ONLINE_ROOM_STORAGE_KEY);
+  return storedRoomId
+    ? { kind: 'online-room', roomId: storedRoomId }
+    : { kind: 'local-start' };
+}
 
 function App() {
-  const [playerNames, setPlayerNames] = useState<string[] | null>(null);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
+  const [screen, setScreen] = useState<Screen>(initialScreen);
   const { user, profile, loading } = useAuth();
 
-  const closeAuth = () => {
-    setAuthOpen(false);
-    setAuthScreen('login');
+  const enterRoom = (roomId: string) => {
+    localStorage.setItem(ONLINE_ROOM_STORAGE_KEY, roomId);
+    setScreen({ kind: 'online-room', roomId });
   };
 
-  if (playerNames) {
+  const exitRoom = () => {
+    localStorage.removeItem(ONLINE_ROOM_STORAGE_KEY);
+    setScreen({ kind: 'auth-gate', authScreen: 'login' });
+  };
+
+  if (screen.kind === 'local-game') {
     return (
       <GameScreen
-        playerNames={playerNames}
-        onPlayAgain={() => setPlayerNames(null)}
+        playerNames={screen.playerNames}
+        onPlayAgain={() => setScreen({ kind: 'local-start' })}
       />
     );
   }
 
-  if (authOpen) {
+  if (screen.kind === 'online-room') {
+    if (!user) {
+      return <p>Ładowanie…</p>;
+    }
+    return <OnlineRoomScreen roomId={screen.roomId} ownUid={user.uid} onLeft={exitRoom} />;
+  }
+
+  if (screen.kind === 'profile') {
+    return (
+      <ProfileScreen
+        onSignedOut={() => setScreen({ kind: 'local-start' })}
+        onBackToLocal={() => setScreen({ kind: 'local-start' })}
+      />
+    );
+  }
+
+  if (screen.kind === 'auth-gate') {
     if (loading) {
       return <p>Ładowanie…</p>;
     }
 
     if (!user) {
-      if (authScreen === 'register') {
+      if (screen.authScreen === 'register') {
         return (
           <RegisterScreen
             onSuccess={() => {}}
-            onNavigateToLogin={() => setAuthScreen('login')}
-            onCancel={closeAuth}
+            onNavigateToLogin={() => setScreen({ kind: 'auth-gate', authScreen: 'login' })}
+            onCancel={() => setScreen({ kind: 'local-start' })}
           />
         );
       }
-      if (authScreen === 'forgot-password') {
+      if (screen.authScreen === 'forgot-password') {
         return (
           <ForgotPasswordScreen
-            onNavigateToLogin={() => setAuthScreen('login')}
-            onCancel={closeAuth}
+            onNavigateToLogin={() => setScreen({ kind: 'auth-gate', authScreen: 'login' })}
+            onCancel={() => setScreen({ kind: 'local-start' })}
           />
         );
       }
       return (
         <LoginScreen
           onSuccess={() => {}}
-          onNavigateToRegister={() => setAuthScreen('register')}
-          onNavigateToForgotPassword={() => setAuthScreen('forgot-password')}
-          onCancel={closeAuth}
+          onNavigateToRegister={() => setScreen({ kind: 'auth-gate', authScreen: 'register' })}
+          onNavigateToForgotPassword={() =>
+            setScreen({ kind: 'auth-gate', authScreen: 'forgot-password' })
+          }
+          onCancel={() => setScreen({ kind: 'local-start' })}
         />
       );
     }
@@ -68,18 +107,24 @@ function App() {
         <ProfileSetupScreen
           user={user}
           onComplete={() => {}}
-          onCancel={closeAuth}
+          onCancel={() => setScreen({ kind: 'local-start' })}
         />
       );
     }
 
     return (
-      <ProfileScreen onSignedOut={closeAuth} onBackToLocal={closeAuth} />
+      <OnlineMenuScreen
+        onRoomJoined={enterRoom}
+        onOpenProfile={() => setScreen({ kind: 'profile' })}
+      />
     );
   }
 
   return (
-    <StartScreen onStart={setPlayerNames} onOpenAuth={() => setAuthOpen(true)} />
+    <StartScreen
+      onStart={(playerNames) => setScreen({ kind: 'local-game', playerNames })}
+      onOpenAuth={() => setScreen({ kind: 'auth-gate', authScreen: 'login' })}
+    />
   );
 }
 
