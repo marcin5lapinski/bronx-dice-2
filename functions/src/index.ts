@@ -9,3 +9,4 @@ export { toggleHeldDie } from './rooms/toggleHeldDie';
 export { scoreCategory } from './rooms/scoreCategory';
 export { leaveRoom } from './rooms/leaveRoom';
 export { setReady } from './rooms/setReady';
+export { handleTurnTimeout } from './rooms/handleTurnTimeout';
