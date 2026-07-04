@@ -11,13 +11,14 @@ interface DiceTrayProps {
   dice: DiceValue[];
   heldDice: boolean[];
   onToggleHeld: (index: number) => void;
+  interactive?: boolean;
 }
 
 function diceFaceSrc(value: DiceValue, held: boolean): string {
   return `/dice/die-${held ? 'muted' : 'glow'}-${value}.png`;
 }
 
-function DiceTray({ dice, heldDice, onToggleHeld }: DiceTrayProps) {
+function DiceTray({ dice, heldDice, onToggleHeld, interactive = true }: DiceTrayProps) {
   const hasBeenRolled = dice.length === 5;
   const [rollingIndices, setRollingIndices] = useState<number[]>([]);
 
@@ -55,7 +56,7 @@ function DiceTray({ dice, heldDice, onToggleHeld }: DiceTrayProps) {
             type="button"
             className={classes.join(' ')}
             aria-pressed={heldDice[index]}
-            disabled={!hasBeenRolled}
+            disabled={!hasBeenRolled || !interactive}
             onClick={() => onToggleHeld(index)}
           >
             {displayValue !== null ? (

@@ -113,6 +113,21 @@ describe('DiceTray', () => {
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true');
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
   });
+
+  it('disables the dice when interactive is false even after rolling', () => {
+    const dice: DiceValue[] = [1, 2, 3, 4, 5];
+    render(
+      <DiceTray
+        dice={dice}
+        heldDice={[false, false, false, false, false]}
+        onToggleHeld={() => {}}
+        interactive={false}
+      />
+    );
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toBeDisabled();
+    }
+  });
 });
 
 describe('roll animation', () => {

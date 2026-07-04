@@ -135,6 +135,23 @@ describe('ScoreBoard', () => {
     expect(row.querySelector('button')).toBeNull();
   });
 
+  it('hides the clickable preview when interactive is false, even for the current player', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const dice: DiceValue[] = [3, 3, 1, 2, 5];
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={dice}
+        rollsLeft={3}
+        interactive={false}
+        onScore={() => {}}
+      />
+    );
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+
   it('shows each player total in the Suma row', () => {
     const state = createGameState(['Ola', 'Kuba']);
     state.scoreCards[state.players[0].id].upper.aces = 3;

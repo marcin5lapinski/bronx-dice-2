@@ -1,12 +1,13 @@
 interface RollButtonProps {
   rollsLeft: number;
   onRoll: () => void;
+  interactive?: boolean;
 }
 
-function RollButton({ rollsLeft, onRoll }: RollButtonProps) {
+function RollButton({ rollsLeft, onRoll, interactive = true }: RollButtonProps) {
   return (
     <div className="roll-button">
-      <button type="button" disabled={rollsLeft === 0} onClick={onRoll}>
+      <button type="button" disabled={rollsLeft === 0 || !interactive} onClick={onRoll}>
         Rzuć kośćmi
       </button>
       <p>Pozostałe rzuty: {rollsLeft}</p>

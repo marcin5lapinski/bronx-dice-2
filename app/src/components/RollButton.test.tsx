@@ -27,4 +27,9 @@ describe('RollButton', () => {
     await user.click(button);
     expect(onRoll).not.toHaveBeenCalled();
   });
+
+  it('is disabled when interactive is false even with rolls remaining', () => {
+    render(<RollButton rollsLeft={3} onRoll={() => {}} interactive={false} />);
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toBeDisabled();
+  });
 });

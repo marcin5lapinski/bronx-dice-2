@@ -18,6 +18,7 @@ interface ScoreBoardProps {
   currentPlayerId: string;
   dice: DiceValue[];
   rollsLeft: number;
+  interactive?: boolean;
   onScore: (category: ScoreCategory) => void;
 }
 
@@ -71,6 +72,7 @@ function ScoreBoard({
   currentPlayerId,
   dice,
   rollsLeft,
+  interactive = true,
   onScore,
 }: ScoreBoardProps) {
   const hasRolled = dice.length === 5;
@@ -83,7 +85,10 @@ function ScoreBoard({
         const value = scoreValue(scoreCard, category);
         const isCurrentPlayer = player.id === currentPlayerId;
         const clickable =
-          isCurrentPlayer && hasRolled && canScoreCategory(scoreCard, category);
+          isCurrentPlayer &&
+          interactive &&
+          hasRolled &&
+          canScoreCategory(scoreCard, category);
         return (
           <td
             key={player.id}
