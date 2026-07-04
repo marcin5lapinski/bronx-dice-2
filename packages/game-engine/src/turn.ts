@@ -1,5 +1,5 @@
-import type { GameState, ScoreCategory, Player, PlayerScoreCard } from '../types/game';
-import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '../types/game';
+import type { GameState, ScoreCategory, Player, PlayerScoreCard } from './types/game';
+import { UPPER_CATEGORIES, LOWER_CATEGORIES } from './types/game';
 import { rollDice } from './dice';
 import { scoreCategory, calculateTotal } from './scoreCard';
 import { nextTurn } from './gameState';

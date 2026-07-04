@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { createGameState } from '../engine/gameState';
 import {
+  createGameState,
   rollInTurn,
   toggleHeldDie,
   applyScore,
   isGameOver,
   getWinners,
-} from '../engine/turn';
-import type { GameState, ScoreCategory } from '../types/game';
+  type GameState,
+  type ScoreCategory,
+} from '@bronx-dice/game-engine';
 import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
 import RollButton from './RollButton';
 import ScoreBoard from './ScoreBoard';

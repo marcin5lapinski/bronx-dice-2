@@ -1,0 +1,12 @@
+{
+  "name": "bronx-dice",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "app",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:engine": "npm run build --workspace=packages/game-engine"
+  }
+}

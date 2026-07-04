@@ -3,8 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ScoreBoard from './ScoreBoard';
-import { createGameState } from '../engine/gameState';
-import type { DiceValue } from '../types/game';
+import { createGameState, type DiceValue } from '@bronx-dice/game-engine';
 
 describe('ScoreBoard', () => {
   it('renders category labels and one column per player', () => {

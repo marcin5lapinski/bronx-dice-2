@@ -1,4 +1,4 @@
-import type { DiceValue } from '../types/game';
+import type { DiceValue } from './types/game';
 
 export const DICE_COUNT = 5;
 export const MAX_ROLLS = 3;

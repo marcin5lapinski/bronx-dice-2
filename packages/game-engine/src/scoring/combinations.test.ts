@@ -11,7 +11,7 @@ import {
   yahtzeeScore,
   chanceScore,
 } from './combinations';
-import type { DiceValue } from '../../types/game';
+import type { DiceValue } from '../types/game';
 
 describe('countsByValue', () => {
   it('counts occurrences of each face value', () => {

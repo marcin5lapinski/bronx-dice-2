@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DiceValue } from '../types/game';
+import type { DiceValue } from '@bronx-dice/game-engine';
 
 export const ROLL_ANIMATION_MS = 1000;
 

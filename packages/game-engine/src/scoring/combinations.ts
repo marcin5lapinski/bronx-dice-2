@@ -1,4 +1,4 @@
-import type { DiceValue } from '../../types/game';
+import type { DiceValue } from '../types/game';
 
 const ALL_FACES: DiceValue[] = [1, 2, 3, 4, 5, 6];
 

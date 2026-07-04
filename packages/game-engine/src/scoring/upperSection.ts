@@ -1,5 +1,5 @@
-import type { DiceValue, UpperCategory, PlayerScoreCard } from '../../types/game';
-import { UPPER_CATEGORIES } from '../../types/game';
+import type { DiceValue, UpperCategory, PlayerScoreCard } from '../types/game';
+import { UPPER_CATEGORIES } from '../types/game';
 
 export const UPPER_BONUS_THRESHOLD = 63;
 export const UPPER_BONUS_VALUE = 50;

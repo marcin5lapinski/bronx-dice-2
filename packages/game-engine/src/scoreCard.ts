@@ -4,8 +4,8 @@ import type {
   UpperCategory,
   LowerCategory,
   DiceValue,
-} from '../types/game';
-import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '../types/game';
+} from './types/game';
+import { UPPER_CATEGORIES, LOWER_CATEGORIES } from './types/game';
 import { calculateUpperSum, calculateBonus } from './scoring/upperSection';
 import { upperCategoryScore } from './scoring/upperSection';
 import {

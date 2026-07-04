@@ -1,4 +1,4 @@
-import type { GameState, Player } from '../types/game';
+import type { GameState, Player } from './types/game';
 import { createEmptyScoreCard } from './scoreCard';
 import { createEmptyDice, MAX_ROLLS } from './dice';
 

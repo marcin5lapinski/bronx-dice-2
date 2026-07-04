@@ -6,7 +6,7 @@ import {
   UPPER_BONUS_THRESHOLD,
   UPPER_BONUS_VALUE,
 } from './upperSection';
-import type { DiceValue, PlayerScoreCard } from '../../types/game';
+import type { DiceValue, PlayerScoreCard } from '../types/game';
 
 describe('upperCategoryScore', () => {
   it('sums only the dice matching the category face value', () => {

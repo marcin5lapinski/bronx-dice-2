@@ -3,8 +3,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WinnerScreen from './WinnerScreen';
-import { createEmptyScoreCard } from '../engine/scoreCard';
-import type { Player, PlayerScoreCard } from '../types/game';
+import {
+  createEmptyScoreCard,
+  type Player,
+  type PlayerScoreCard,
+} from '@bronx-dice/game-engine';
 
 function scoreCardWithTotal(total: number): PlayerScoreCard {
   const card = createEmptyScoreCard();

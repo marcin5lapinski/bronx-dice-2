@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { rollDice, createEmptyDice, DICE_COUNT, MAX_ROLLS } from './dice';
-import type { DiceValue } from '../types/game';
+import type { DiceValue } from './types/game';
 
 describe('constants', () => {
   it('DICE_COUNT is 5', () => {

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
-import type { DiceValue } from '../types/game';
+import type { DiceValue } from '@bronx-dice/game-engine';
 
 describe('DiceTray', () => {
   afterEach(() => {

@@ -1,17 +1,16 @@
-import type {
-  Player,
-  PlayerScoreCard,
-  ScoreCategory,
-  DiceValue,
-} from '../types/game';
-import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '../types/game';
 import {
+  UPPER_CATEGORIES,
+  LOWER_CATEGORIES,
   canScoreCategory,
   calculateTotal,
   isUpperCategory,
   scoreCategory,
-} from '../engine/scoreCard';
-import { calculateBonus } from '../engine/scoring/upperSection';
+  calculateBonus,
+  type Player,
+  type PlayerScoreCard,
+  type ScoreCategory,
+  type DiceValue,
+} from '@bronx-dice/game-engine';
 
 interface ScoreBoardProps {
   players: Player[];

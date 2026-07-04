@@ -9,8 +9,8 @@ import {
 } from './turn';
 import { createGameState } from './gameState';
 import { createEmptyScoreCard } from './scoreCard';
-import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '../types/game';
-import type { DiceValue, PlayerScoreCard } from '../types/game';
+import { UPPER_CATEGORIES, LOWER_CATEGORIES } from './types/game';
+import type { DiceValue, PlayerScoreCard } from './types/game';
 
 describe('rollInTurn', () => {
   it('throws when there are no rolls left', () => {

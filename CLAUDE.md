@@ -6,13 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Bronx Dice — a Yahtzee-style dice game with custom house rules. This repo is a from-scratch rewrite (React + TypeScript + Vite) of an old Create React App prototype. The active project lives entirely under **`app/`** — all commands below are run from there.
 
-- `app/` — the current project (Vite + React 19 + TypeScript). This is what you should read and edit.
+- `app/` — the React + TypeScript client (Vite). This is what you should read and edit for UI work.
+- `packages/game-engine/` — the pure game engine (scoring rules, `GameState`), shared as an npm workspace package by both `app/` and `functions/`. Edit rule logic here, not in `app/`.
+- `functions/` — Cloud Functions (Firebase Functions v2) that are the only way to mutate online-room state in Firestore.
 - `pierwowzor/` — the original Create React App prototype ("pierwowzor" = "prototype" in Polish). It is **untracked** in this git repo (not a submodule, just kept locally for reference) and has its own nested `.git`. Its game logic is known to be buggy (copy-pasted per-player instead of parameterized, and Pair/Two Pair/Three of a Kind/Full House detection is broken). Do not edit it; consult it only if you need to check what the old behavior was.
 - `docs/superpowers/specs/2026-07-01-bronx-dice-roadmap-design.md` — the design doc with the full game rules and the stage-by-stage roadmap (in Polish). `docs/superpowers/plans/` holds per-stage implementation plans ("etap" = stage). Read the roadmap doc before making rule changes — it's the source of truth for scoring rules.
 
 ## Commands
 
-Run from `app/`:
+This is an npm workspace repo. Most commands below take a `--workspace=<name>` flag (or `cd` into that package) — `app`, `functions`, `packages/game-engine`. `firebase emulators:start` and any `firebase emulators:exec ...` wrapper script run from the **repo root**, where `firebase.json` now lives.
 
 ```
 npm run dev       # start Vite dev server

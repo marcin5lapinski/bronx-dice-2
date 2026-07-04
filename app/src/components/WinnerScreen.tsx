@@ -1,5 +1,4 @@
-import type { Player, PlayerScoreCard } from '../types/game';
-import { calculateTotal } from '../engine/scoreCard';
+import { calculateTotal, type Player, type PlayerScoreCard } from '@bronx-dice/game-engine';
 
 interface WinnerScreenProps {
   winners: Player[];

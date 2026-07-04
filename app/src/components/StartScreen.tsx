@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MIN_PLAYERS, MAX_PLAYERS } from '../engine/gameState';
+import { MIN_PLAYERS, MAX_PLAYERS } from '@bronx-dice/game-engine';
 import { useAuth } from '../contexts/AuthContext';
 import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/playerOrder';
 
