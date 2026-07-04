@@ -1772,12 +1772,15 @@ interface RoomBase {
   updatedAt: Timestamp;
 }
 
+type RoomGameState = Omit<GameState, 'players'> & { players: RoomPlayer[] };
+
 export type RoomDocument =
   | (RoomBase & { phase: 'lobby'; players: RoomPlayer[] })
-  | (RoomBase & { phase: 'playing' | 'finished' } & GameState & {
-        turnStartedAt: Timestamp;
-      });
+  | (RoomBase & { phase: 'playing' } & RoomGameState & { turnStartedAt: Timestamp })
+  | (RoomBase & { phase: 'finished' } & RoomGameState & { turnStartedAt: Timestamp });
 ```
+
+**Note:** unlike the server-side `RoomDocument` in `functions/src/rooms/types.ts` (which combines `'playing' | 'finished'` into one intersection member — harmless there since server code only ever checks `room.phase !== 'playing'` at runtime, never `Extract<RoomDocument, {phase:'playing'}>`), the client-side type here MUST split `'playing'` and `'finished'` into two separate discriminated members. `OnlineGameScreen` (Task 15) and `OnlineRoomScreen` (Task 16) declare their `room` prop as `Extract<RoomDocument, { phase: 'playing' }>`, and `Extract` distributes over union members: a member whose `phase` is typed as the union `'playing' | 'finished'` is not assignable to `{ phase: 'playing' }` as a whole (since `'finished'` isn't assignable to `'playing'`), so `Extract` on the combined shape silently evaluates to `never` — which `tsc -b` catches at the `OnlineGameScreen`/`OnlineRoomScreen` call sites, but `vitest` (transform-only, no type-check) does not. The `RoomGameState` alias also overrides `GameState`'s plain `players: Player[]` with `RoomPlayer[]`, since the runtime data always carries `avatarId`/`ready` (per `createGameStateFromPlayers` passing the `RoomPlayer[]` through unchanged) and `OnlineGameScreen`/`RoomLobbyScreen` read those fields directly.
 
 - [ ] **Step 2: Write the failing tests for `useRoom`**
 
