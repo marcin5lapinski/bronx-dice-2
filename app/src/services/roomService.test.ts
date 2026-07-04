@@ -55,6 +55,15 @@ describe('roomService', () => {
     expect(call).toHaveBeenCalledWith({ roomId: 'AAAAA' });
   });
 
+  it('startGame calls the startGame callable with a player order when given', async () => {
+    const call = vi.fn().mockResolvedValue({ data: undefined });
+    mockHttpsCallable.mockReturnValue(call);
+
+    await roomService.startGame('AAAAA', ['uid-2', 'uid-1']);
+
+    expect(call).toHaveBeenCalledWith({ roomId: 'AAAAA', playerOrder: ['uid-2', 'uid-1'] });
+  });
+
   it('rollDice calls the rollDice callable with the roomId', async () => {
     const call = vi.fn().mockResolvedValue({ data: undefined });
     mockHttpsCallable.mockReturnValue(call);

@@ -22,9 +22,12 @@ export async function setReady(roomId: string, ready: boolean): Promise<void> {
   await call({ roomId, ready });
 }
 
-export async function startGame(roomId: string): Promise<void> {
-  const call = httpsCallable<{ roomId: string }, void>(functions, 'startGame');
-  await call({ roomId });
+export async function startGame(roomId: string, playerOrder?: string[]): Promise<void> {
+  const call = httpsCallable<{ roomId: string; playerOrder?: string[] }, void>(
+    functions,
+    'startGame'
+  );
+  await call({ roomId, playerOrder });
 }
 
 export async function rollDice(roomId: string): Promise<void> {

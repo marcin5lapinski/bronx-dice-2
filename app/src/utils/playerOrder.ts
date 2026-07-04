@@ -21,6 +21,22 @@ export function reorderNames(
   return arrayMove(rows, oldIndex, newIndex);
 }
 
+export function reorderIds(
+  ids: string[],
+  activeId: string,
+  overId: string | null
+): string[] {
+  if (!overId || activeId === overId) {
+    return ids;
+  }
+  const oldIndex = ids.indexOf(activeId);
+  const newIndex = ids.indexOf(overId);
+  if (oldIndex === -1 || newIndex === -1) {
+    return ids;
+  }
+  return arrayMove(ids, oldIndex, newIndex);
+}
+
 export function shufflePlayerOrder(
   names: string[],
   random: () => number = Math.random

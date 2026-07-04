@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   reorderNames,
+  reorderIds,
   shufflePlayerOrder,
   type PlayerNameRow,
 } from './playerOrder';
@@ -35,6 +36,30 @@ describe('reorderNames', () => {
   it('returns the same array when overId is not found', () => {
     const result = reorderNames(rows, 'a', 'does-not-exist');
     expect(result).toEqual(rows);
+  });
+});
+
+describe('reorderIds', () => {
+  const ids = ['a', 'b', 'c'];
+
+  it('moves an id to a new position', () => {
+    expect(reorderIds(ids, 'c', 'a')).toEqual(['c', 'a', 'b']);
+  });
+
+  it('returns the same array when activeId equals overId', () => {
+    expect(reorderIds(ids, 'b', 'b')).toEqual(ids);
+  });
+
+  it('returns the same array when overId is null', () => {
+    expect(reorderIds(ids, 'b', null)).toEqual(ids);
+  });
+
+  it('returns the same array when an id is not found', () => {
+    expect(reorderIds(ids, 'does-not-exist', 'a')).toEqual(ids);
+  });
+
+  it('returns the same array when overId is not found', () => {
+    expect(reorderIds(ids, 'a', 'does-not-exist')).toEqual(ids);
   });
 });
 

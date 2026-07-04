@@ -71,7 +71,7 @@ describe('RoomLobbyScreen', () => {
     expect(screen.queryByRole('button', { name: 'Rozpocznij grę' })).not.toBeInTheDocument();
   });
 
-  it('calls startGame when the host clicks Start', async () => {
+  it('calls startGame with the current player order when the host clicks Start', async () => {
     const user = userEvent.setup();
     vi.mocked(startGame).mockResolvedValue(undefined);
     const room = lobbyRoom({
@@ -82,7 +82,50 @@ describe('RoomLobbyScreen', () => {
     });
     render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
-    expect(startGame).toHaveBeenCalledWith('AAAAA');
+    expect(startGame).toHaveBeenCalledWith('AAAAA', ['uid-1', 'uid-2']);
+  });
+
+  it('renders a drag handle for each player row for the host', () => {
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Zmień kolejność: Ola' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zmień kolejność: Kuba' })).toBeInTheDocument();
+  });
+
+  it('does not render drag handles or the randomize checkbox for a non-host', () => {
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-2" onLeft={() => {}} />);
+    expect(
+      screen.queryByRole('button', { name: 'Zmień kolejność: Ola' })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Losuj kolejność')).not.toBeInTheDocument();
+  });
+
+  it('disables the drag handles when "Losuj kolejność" is checked', async () => {
+    const user = userEvent.setup();
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+
+    expect(screen.getByRole('button', { name: 'Zmień kolejność: Ola' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Zmień kolejność: Kuba' })).toBeDisabled();
+  });
+
+  it('starts the game with a shuffled player order when "Losuj kolejność" is checked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(startGame).mockResolvedValue(undefined);
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const room = lobbyRoom({
+      players: [
+        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+      ],
+    });
+    render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    // Fisher-Yates on 2 items with random()=0: i=1, j=floor(0*2)=0, swap(1,0)
+    expect(startGame).toHaveBeenCalledWith('AAAAA', ['uid-2', 'uid-1']);
   });
 
   it('leaves the room and calls onLeft', async () => {

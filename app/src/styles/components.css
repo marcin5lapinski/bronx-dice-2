@@ -589,7 +589,8 @@
   cursor: not-allowed;
 }
 
-.start-screen .randomize-order-label {
+.start-screen .randomize-order-label,
+.room-lobby-screen .randomize-order-label {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -601,7 +602,8 @@
   letter-spacing: 1px;
 }
 
-.start-screen .randomize-order-label input[type='checkbox'] {
+.start-screen .randomize-order-label input[type='checkbox'],
+.room-lobby-screen .randomize-order-label input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
   width: 20px;
@@ -615,13 +617,15 @@
   cursor: pointer;
 }
 
-.start-screen .randomize-order-label input[type='checkbox']:checked {
+.start-screen .randomize-order-label input[type='checkbox']:checked,
+.room-lobby-screen .randomize-order-label input[type='checkbox']:checked {
   border-color: var(--accent-green);
   background: var(--accent-green-bg);
   box-shadow: 0 0 8px var(--accent-green-glow);
 }
 
-.start-screen .randomize-order-label input[type='checkbox']:checked::after {
+.start-screen .randomize-order-label input[type='checkbox']:checked::after,
+.room-lobby-screen .randomize-order-label input[type='checkbox']:checked::after {
   content: '';
   position: absolute;
   left: 6px;
@@ -633,7 +637,8 @@
   transform: rotate(45deg);
 }
 
-.start-screen .randomize-order-label input[type='checkbox']:focus-visible {
+.start-screen .randomize-order-label input[type='checkbox']:focus-visible,
+.room-lobby-screen .randomize-order-label input[type='checkbox']:focus-visible {
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 8px var(--accent-blue-glow);
