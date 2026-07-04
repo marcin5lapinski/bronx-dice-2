@@ -85,4 +85,21 @@ describe('room lifecycle (Firestore emulator)', () => {
     expect(room.scoreCards['uid-host'].upper.aces).toBe(0);
     expect(room.currentPlayerIndex).toBe(1);
   });
+
+  it('starts the game with a host-chosen player order', async () => {
+    const roomId = await createRoomHandler(db, 'uid-host', hostProfile, 2, 30);
+    const roomRef = db.collection('rooms').doc(roomId);
+    await db.runTransaction((tx) => joinRoomHandler(tx, roomRef, 'uid-guest', guestProfile));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-host', true));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-guest', true));
+
+    await db.runTransaction((tx) =>
+      startGameHandler(tx, roomRef, 'uid-host', ['uid-guest', 'uid-host'])
+    );
+
+    const room = await getRoom(roomId);
+    expect(room.phase).toBe('playing');
+    expect(room.players.map((player) => player.id)).toEqual(['uid-guest', 'uid-host']);
+    expect(room.currentPlayerIndex).toBe(0);
+  });
 });

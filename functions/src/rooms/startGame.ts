@@ -3,12 +3,27 @@ import { Timestamp, type Transaction, type DocumentReference } from 'firebase-ad
 import { createGameStateFromPlayers, MIN_PLAYERS } from '@bronx-dice/game-engine';
 import { db } from '../firebaseAdmin';
 import { unauthenticated, notFound, failedPrecondition, permissionDenied, invalidArgument } from '../errors';
-import type { RoomDocument } from './types';
+import type { RoomDocument, RoomPlayer } from './types';
+
+function applyPlayerOrder(players: RoomPlayer[], playerOrder?: string[]): RoomPlayer[] {
+  if (!playerOrder) {
+    return players;
+  }
+  const isValidPermutation =
+    playerOrder.length === players.length &&
+    new Set(playerOrder).size === players.length &&
+    playerOrder.every((id) => players.some((player) => player.id === id));
+  if (!isValidPermutation) {
+    throw invalidArgument('Nieprawidłowa kolejność graczy.');
+  }
+  return playerOrder.map((id) => players.find((player) => player.id === id)!);
+}
 
 export async function startGameHandler(
   tx: Transaction,
   roomRef: DocumentReference,
   uid: string,
+  playerOrder?: string[],
   now: () => Timestamp = Timestamp.now
 ): Promise<void> {
   const snapshot = await tx.get(roomRef);
@@ -28,7 +43,8 @@ export async function startGameHandler(
   if (!room.players.every((player) => player.ready)) {
     throw failedPrecondition('Nie wszyscy gracze są gotowi.');
   }
-  const gameState = createGameStateFromPlayers(room.players);
+  const orderedPlayers = applyPlayerOrder(room.players, playerOrder);
+  const gameState = createGameStateFromPlayers(orderedPlayers);
   const timestamp = now();
   tx.update(roomRef, {
     ...gameState,
@@ -38,7 +54,7 @@ export async function startGameHandler(
   });
 }
 
-export const startGame = onCall<{ roomId: string }>(async (request) => {
+export const startGame = onCall<{ roomId: string; playerOrder?: string[] }>(async (request) => {
   if (!request.auth) {
     throw unauthenticated();
   }
@@ -46,6 +62,13 @@ export const startGame = onCall<{ roomId: string }>(async (request) => {
   if (typeof roomId !== 'string' || roomId.length === 0) {
     throw invalidArgument('Brak kodu pokoju.');
   }
+  const playerOrder = request.data?.playerOrder;
+  if (
+    playerOrder !== undefined &&
+    (!Array.isArray(playerOrder) || !playerOrder.every((id) => typeof id === 'string'))
+  ) {
+    throw invalidArgument('Nieprawidłowa kolejność graczy.');
+  }
   const roomRef = db.collection('rooms').doc(roomId);
-  await db.runTransaction((tx) => startGameHandler(tx, roomRef, request.auth!.uid));
+  await db.runTransaction((tx) => startGameHandler(tx, roomRef, request.auth!.uid, playerOrder));
 });
