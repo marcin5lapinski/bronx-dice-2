@@ -3,3 +3,4 @@
 // export here as it implements the corresponding Cloud Function.
 export { createRoom } from './rooms/createRoom';
 export { joinRoom } from './rooms/joinRoom';
+export { startGame } from './rooms/startGame';
