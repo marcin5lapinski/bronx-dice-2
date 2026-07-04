@@ -5,3 +5,4 @@ export { createRoom } from './rooms/createRoom';
 export { joinRoom } from './rooms/joinRoom';
 export { startGame } from './rooms/startGame';
 export { rollDice } from './rooms/rollDice';
+export { toggleHeldDie } from './rooms/toggleHeldDie';
