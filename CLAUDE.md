@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Bronx Dice — a Yahtzee-style dice game with custom house rules. This repo is a from-scratch rewrite (React + TypeScript + Vite) of an old Create React App prototype. The active project lives entirely under **`app/`** — all commands below are run from there.
+Bronx Dice — a Yahtzee-style dice game with custom house rules. This repo is a from-scratch rewrite (React + TypeScript + Vite) of an old Create React App prototype, now structured as an npm workspace monorepo with three packages: the `app/` client, the shared `packages/game-engine/` scoring engine, and (from Etap 5 onward) `functions/` for online play.
 
 - `app/` — the React + TypeScript client (Vite). This is what you should read and edit for UI work.
 - `packages/game-engine/` — the pure game engine (scoring rules, `GameState`), shared as an npm workspace package by both `app/` and `functions/`. Edit rule logic here, not in `app/`.
@@ -22,7 +22,7 @@ npm run build      # tsc -b (project references) + vite build
 npm run lint        # oxlint
 npm test              # vitest run (all tests, single run)
 npx vitest              # vitest in watch mode
-npx vitest run src/engine/dice.test.ts   # run a single test file
+npx vitest run src/dice.test.ts   # run a single test file (from packages/game-engine/)
 npx vitest run -t "test name"            # run tests matching a name
 ```
 
@@ -30,9 +30,9 @@ There is no separate typecheck script; `npm run build` type-checks via `tsc -b` 
 
 ## Architecture
 
-### Engine layer (`app/src/engine/`) — pure logic, no React
+### Engine layer (`packages/game-engine/src/`) — pure logic, no React
 
-The engine is a set of pure, parameterized functions operating on a single `GameState` (types in `app/src/types/game.ts`). There is no per-player duplication — every function takes state/dice/category as arguments.
+The engine is a set of pure, parameterized functions operating on a single `GameState` (types in `packages/game-engine/src/types/game.ts`). There is no per-player duplication — every function takes state/dice/category as arguments. It's built as the `@bronx-dice/game-engine` npm workspace package (run `npm run build:engine` from the repo root after changing it) and imported by `app/` and, from later Etap 5 tasks onward, by `functions/`.
 
 - `dice.ts` — `rollDice(currentDice, held, random)` takes an injectable RNG (defaults to `Math.random`) so it's deterministic in tests. `DICE_COUNT = 5`, `MAX_ROLLS = 3`.
 - `scoreCard.ts` — `canScoreCategory` enforces that the **lower section can only be filled once the entire upper section is filled** (`isUpperSectionFilled`). `scoreCategory` is the single orchestrator for writing a score: it dispatches to `scoring/upperSection.ts` or `scoring/combinations.ts`, then applies the house rules below.
@@ -53,7 +53,7 @@ Screen flow is driven by `App.tsx` holding `playerNames` in `useState`: `null` �
 
 ### Testing conventions
 
-- Vitest's default `test.environment` is `'node'` (see `vite.config.ts`) — engine tests run fast with no DOM.
+- Vitest's default `test.environment` is `'node'`. `packages/game-engine` has no vite/vitest config and relies on that default; `app/vite.config.ts` sets it explicitly too — either way, engine tests run fast with no DOM.
 - Component tests that need a DOM must opt in per-file with a `// @vitest-environment jsdom` pragma as the first line (see `App.test.tsx`), and use `@testing-library/react` / `@testing-library/user-event`.
 - Every engine module has a co-located `*.test.ts`; keep this pairing when adding engine code.
 
