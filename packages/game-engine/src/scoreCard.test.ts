@@ -6,6 +6,7 @@ import {
   canScoreCategory,
   calculateTotal,
   scoreCategory,
+  findNextScorableCategory,
   DOUBLE_SCORE_ROLLS_LEFT,
   YAHTZEE_BONUS,
 } from './scoreCard';
@@ -203,5 +204,38 @@ describe('scoreCategory', () => {
       DOUBLE_SCORE_ROLLS_LEFT
     );
     expect(result.lower.yahtzee).toBe(0);
+  });
+});
+
+describe('findNextScorableCategory', () => {
+  it('returns the first unfilled upper category when the upper section is incomplete', () => {
+    const card = createEmptyScoreCard();
+    card.upper.aces = 1;
+    card.upper.twos = 2;
+    expect(findNextScorableCategory(card)).toBe('threes');
+  });
+
+  it('returns the first unfilled lower category once the upper section is filled', () => {
+    const card = createEmptyScoreCard();
+    card.upper = { aces: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
+    card.lower.pair = 4;
+    expect(findNextScorableCategory(card)).toBe('twoPair');
+  });
+
+  it('throws when the score card is already complete', () => {
+    const card = createEmptyScoreCard();
+    card.upper = { aces: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 };
+    card.lower = {
+      pair: 4,
+      twoPair: 4,
+      threeOfKind: 8,
+      fourOfKind: 16,
+      smallStraight: 15,
+      largeStraight: 20,
+      fullHouse: 25,
+      chance: 10,
+      yahtzee: 50,
+    };
+    expect(() => findNextScorableCategory(card)).toThrow();
   });
 });

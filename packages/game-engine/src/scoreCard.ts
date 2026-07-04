@@ -104,3 +104,21 @@ export function scoreCategory(
   }
   return { ...scoreCard, lower: { ...scoreCard.lower, [category]: value } };
 }
+
+export function findNextScorableCategory(
+  scoreCard: PlayerScoreCard
+): ScoreCategory {
+  const nextUpper = UPPER_CATEGORIES.find(
+    (category) => scoreCard.upper[category] === null
+  );
+  if (nextUpper) {
+    return nextUpper;
+  }
+  const nextLower = LOWER_CATEGORIES.find(
+    (category) => scoreCard.lower[category] === null
+  );
+  if (!nextLower) {
+    throw new Error('Score card is already complete');
+  }
+  return nextLower;
+}
