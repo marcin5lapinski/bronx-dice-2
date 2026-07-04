@@ -2,10 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { db } from '../firebaseAdmin';
 import { createRoomHandler } from './createRoom';
 import { joinRoomHandler } from './joinRoom';
+import { setReadyHandler } from './setReady';
 import { startGameHandler } from './startGame';
 import { rollDiceHandler } from './rollDice';
 import { toggleHeldDieHandler } from './toggleHeldDie';
 import { scoreCategoryHandler } from './scoreCategory';
+import { handleTurnTimeoutHandler } from './handleTurnTimeout';
 import type { RoomDocument } from './types';
 
 const hostProfile = { displayName: 'Ola', avatarId: 'fox' };
@@ -28,6 +30,9 @@ describe('room lifecycle (Firestore emulator)', () => {
     room = await getRoom(roomId);
     expect(room.players).toHaveLength(2);
 
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-host', true));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-guest', true));
+
     await db.runTransaction((tx) => startGameHandler(tx, roomRef, 'uid-host'));
     room = await getRoom(roomId);
     expect(room.phase).toBe('playing');
@@ -49,6 +54,35 @@ describe('room lifecycle (Firestore emulator)', () => {
     room = await getRoom(roomId);
     expect(room.scoreCards['uid-host'].upper.aces).toBe(5); // five dice showing 1
     expect(room.phase).toBe('playing');
+    expect(room.currentPlayerIndex).toBe(1);
+  });
+
+  it('rejects startGame until every player is ready, then auto-zeros a timed-out turn', async () => {
+    const roomId = await createRoomHandler(db, 'uid-host', hostProfile, 2, 15);
+    const roomRef = db.collection('rooms').doc(roomId);
+    await db.runTransaction((tx) => joinRoomHandler(tx, roomRef, 'uid-guest', guestProfile));
+
+    await expect(
+      db.runTransaction((tx) => startGameHandler(tx, roomRef, 'uid-host'))
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-host', true));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-guest', true));
+    await db.runTransaction((tx) => startGameHandler(tx, roomRef, 'uid-host'));
+
+    // The just-started turn is well within its 15s limit — any timeout attempt
+    // right now must be rejected regardless of who calls it.
+    await expect(
+      db.runTransaction((tx) => handleTurnTimeoutHandler(tx, roomRef, 'uid-guest'))
+    ).rejects.toMatchObject({ code: 'failed-precondition' });
+
+    // Simulate the limit having elapsed by backdating turnStartedAt directly.
+    const { Timestamp } = await import('firebase-admin/firestore');
+    await roomRef.update({ turnStartedAt: Timestamp.fromMillis(Date.now() - 20_000) });
+
+    await db.runTransaction((tx) => handleTurnTimeoutHandler(tx, roomRef, 'uid-guest'));
+    const room = await getRoom(roomId);
+    expect(room.scoreCards['uid-host'].upper.aces).toBe(0);
     expect(room.currentPlayerIndex).toBe(1);
   });
 });
