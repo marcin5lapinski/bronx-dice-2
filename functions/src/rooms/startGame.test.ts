@@ -39,6 +39,21 @@ describe('startGameHandler', () => {
     expect(patch.currentPlayerIndex).toBe(0);
     expect(patch.dice).toEqual([]);
     expect(Object.keys(patch.scoreCards)).toEqual(['uid-1', 'uid-2']);
+    expect(patch.turnStartedAt).toEqual({});
+  });
+
+  it('rejects when not every player is ready', async () => {
+    const notAllReady: RoomDocument = {
+      ...lobbyRoom,
+      players: [
+        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+      ],
+    };
+    const { tx } = fakeTransaction(notAllReady);
+    await expect(startGameHandler(tx, roomRef, 'uid-1', fixedNow)).rejects.toMatchObject({
+      code: 'failed-precondition',
+    });
   });
 
   it('rejects when the caller is not the host', async () => {

@@ -25,8 +25,17 @@ export async function startGameHandler(
   if (room.players.length < MIN_PLAYERS) {
     throw failedPrecondition(`Potrzeba co najmniej ${MIN_PLAYERS} graczy.`);
   }
+  if (!room.players.every((player) => player.ready)) {
+    throw failedPrecondition('Nie wszyscy gracze są gotowi.');
+  }
   const gameState = createGameStateFromPlayers(room.players);
-  tx.update(roomRef, { ...gameState, phase: 'playing', updatedAt: now() });
+  const timestamp = now();
+  tx.update(roomRef, {
+    ...gameState,
+    phase: 'playing',
+    turnStartedAt: timestamp,
+    updatedAt: timestamp,
+  });
 }
 
 export const startGame = onCall<{ roomId: string }>(async (request) => {
