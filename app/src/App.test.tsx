@@ -118,10 +118,22 @@ describe('App', () => {
       callback(fakeUser);
       return () => {};
     });
+    // Keep auth "loading" indefinitely so this test deterministically observes
+    // the interim loading placeholder instead of racing the profile fetch's
+    // resolution against the assertion (which would otherwise unmount this
+    // exact paragraph node in favor of OnlineRoomScreen's own loading state).
+    vi.mocked(getProfile).mockReturnValue(new Promise(() => {}));
     localStorage.setItem('bronxDice.onlineRoomId', 'AAAAA');
 
     renderApp();
 
     expect(await screen.findByText('Ładowanie…')).toBeInTheDocument();
+  });
+
+  it('clears a stored room and exits to login when auth resolves with no user', async () => {
+    localStorage.setItem('bronxDice.onlineRoomId', 'AAAAA');
+    renderApp();
+    expect(await screen.findByRole('heading', { name: 'Zaloguj się' })).toBeInTheDocument();
+    expect(localStorage.getItem('bronxDice.onlineRoomId')).toBeNull();
   });
 });

@@ -13,6 +13,10 @@ vi.mock('../services/roomService', () => ({
 describe('OnlineMenuScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // `createRoom`/`joinRoom` are plain `vi.fn()`s from the `vi.mock` factory
+    // (not `vi.spyOn`), so `restoreAllMocks` alone doesn't clear their call
+    // history between tests — do that explicitly to keep tests isolated.
+    vi.clearAllMocks();
   });
 
   it('creates a room with the selected settings and reports the new roomId', async () => {
@@ -51,6 +55,17 @@ describe('OnlineMenuScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Dołącz' }));
 
     expect(await screen.findByText('Pokój nie istnieje.')).toBeInTheDocument();
+  });
+
+  it('shows an error and does not call joinRoom when the room code is blank', async () => {
+    const user = userEvent.setup();
+    render(<OnlineMenuScreen onRoomJoined={() => {}} onOpenProfile={() => {}} />);
+
+    await user.type(screen.getByLabelText('Kod pokoju'), '   ');
+    await user.click(screen.getByRole('button', { name: 'Dołącz' }));
+
+    expect(await screen.findByText('Podaj kod pokoju.')).toBeInTheDocument();
+    expect(joinRoom).not.toHaveBeenCalled();
   });
 
   it('calls onOpenProfile when the profile button is clicked', async () => {

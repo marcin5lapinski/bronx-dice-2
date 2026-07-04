@@ -36,6 +36,7 @@ function OnlineMenuScreen({ onRoomJoined, onOpenProfile }: OnlineMenuScreenProps
   const handleJoinRoom = async () => {
     const normalizedCode = roomCode.trim().toUpperCase();
     if (normalizedCode.length === 0) {
+      setError('Podaj kod pokoju.');
       return;
     }
     setSubmitting(true);

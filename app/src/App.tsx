@@ -52,7 +52,11 @@ function App() {
   }
 
   if (screen.kind === 'online-room') {
+    if (loading) {
+      return <p>Ładowanie…</p>;
+    }
     if (!user) {
+      exitRoom();
       return <p>Ładowanie…</p>;
     }
     return <OnlineRoomScreen roomId={screen.roomId} ownUid={user.uid} onLeft={exitRoom} />;

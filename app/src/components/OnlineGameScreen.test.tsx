@@ -64,7 +64,6 @@ describe('OnlineGameScreen', () => {
   it('calls handleTurnTimeout once the countdown reaches zero', () => {
     vi.useFakeTimers();
     const now = Date.now();
-    vi.setSystemTime(now);
     const room = playingRoom({
       turnStartedAt: { toMillis: () => now } as never,
       turnTimeLimitSeconds: 15,
@@ -72,7 +71,6 @@ describe('OnlineGameScreen', () => {
     render(<OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" />);
 
     act(() => {
-      vi.setSystemTime(now + 16_000);
       vi.advanceTimersByTime(16_000);
     });
 
