@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Transaction, DocumentReference, Timestamp } from 'firebase-admin/firestore';
-import { createEmptyScoreCard, UPPER_CATEGORIES, LOWER_CATEGORIES } from '@bronx-dice/game-engine';
+import { createEmptyScoreCard } from '@bronx-dice/game-engine';
 import { scoreCategoryHandler } from './scoreCategory';
 import type { RoomDocument } from './types';
 

@@ -17,7 +17,7 @@ async function getRoom(roomId: string): Promise<RoomDocument> {
 }
 
 describe('room lifecycle (Firestore emulator)', () => {
-  it('goes from createRoom through scoreCategory to a finished game', async () => {
+  it('goes from createRoom through scoreCategory to a scored turn', async () => {
     const roomId = await createRoomHandler(db, 'uid-host', hostProfile, 2);
     let room = await getRoom(roomId);
     expect(room.phase).toBe('lobby');
