@@ -9,16 +9,12 @@ export function createPlayer(id: string, name: string): Player {
   return { id, name };
 }
 
-export function createGameState(playerNames: string[]): GameState {
-  if (playerNames.length < MIN_PLAYERS || playerNames.length > MAX_PLAYERS) {
+export function createGameStateFromPlayers(players: Player[]): GameState {
+  if (players.length < MIN_PLAYERS || players.length > MAX_PLAYERS) {
     throw new Error(
-      `Player count must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}, got ${playerNames.length}`
+      `Player count must be between ${MIN_PLAYERS} and ${MAX_PLAYERS}, got ${players.length}`
     );
   }
-
-  const players = playerNames.map((name, index) =>
-    createPlayer(`player-${index + 1}`, name)
-  );
 
   const scoreCards: GameState['scoreCards'] = {};
   for (const player of players) {
@@ -33,6 +29,13 @@ export function createGameState(playerNames: string[]): GameState {
     rollsLeft: MAX_ROLLS,
     currentPlayerIndex: 0,
   };
+}
+
+export function createGameState(playerNames: string[]): GameState {
+  const players = playerNames.map((name, index) =>
+    createPlayer(`player-${index + 1}`, name)
+  );
+  return createGameStateFromPlayers(players);
 }
 
 export function nextTurn(state: GameState): GameState {
