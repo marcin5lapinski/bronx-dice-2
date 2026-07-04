@@ -5,6 +5,9 @@ import { configDefaults } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['@bronx-dice/game-engine'],
+  },
   test: {
     environment: 'node',
     globals: true,
