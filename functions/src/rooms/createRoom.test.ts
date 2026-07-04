@@ -34,23 +34,24 @@ const profile = { displayName: 'Ola', avatarId: 'fox' };
 const fixedNow = () => ({}) as unknown as Timestamp;
 
 describe('createRoomHandler', () => {
-  it('creates a lobby room with the host as the sole player', async () => {
+  it('creates a lobby room with the host as the sole, not-ready player', async () => {
     const { firestore, writes } = fakeDb(new Set());
-    const roomId = await createRoomHandler(firestore, 'uid-1', profile, 3, () => 0, fixedNow);
+    const roomId = await createRoomHandler(firestore, 'uid-1', profile, 3, 30, () => 0, fixedNow);
     expect(roomId).toBe('AAAAA');
     expect(writes).toHaveLength(1);
     expect(writes[0].data).toMatchObject({
       phase: 'lobby',
       hostId: 'uid-1',
       maxPlayers: 3,
-      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox' }],
+      turnTimeLimitSeconds: 30,
+      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: false }],
     });
   });
 
   it('retries with a new code when the first generated one is already taken', async () => {
     const { firestore, writes } = fakeDb(new Set(['AAAAA']));
     const random = sequenceRandom([0, 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5]);
-    const roomId = await createRoomHandler(firestore, 'uid-1', profile, 2, random, fixedNow);
+    const roomId = await createRoomHandler(firestore, 'uid-1', profile, 2, 30, random, fixedNow);
     expect(roomId).not.toBe('AAAAA');
     expect(writes).toHaveLength(1);
   });
@@ -58,21 +59,28 @@ describe('createRoomHandler', () => {
   it('throws internal after exhausting all retry attempts', async () => {
     const { firestore } = fakeDb(new Set(['AAAAA']));
     await expect(
-      createRoomHandler(firestore, 'uid-1', profile, 2, () => 0, fixedNow)
+      createRoomHandler(firestore, 'uid-1', profile, 2, 30, () => 0, fixedNow)
     ).rejects.toMatchObject({ code: 'internal' });
   });
 
   it('rejects maxPlayers below the minimum', async () => {
     const { firestore } = fakeDb(new Set());
     await expect(
-      createRoomHandler(firestore, 'uid-1', profile, MIN_PLAYERS - 1, () => 0, fixedNow)
+      createRoomHandler(firestore, 'uid-1', profile, MIN_PLAYERS - 1, 30, () => 0, fixedNow)
     ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('rejects maxPlayers above the maximum', async () => {
     const { firestore } = fakeDb(new Set());
     await expect(
-      createRoomHandler(firestore, 'uid-1', profile, 7, () => 0, fixedNow)
+      createRoomHandler(firestore, 'uid-1', profile, 7, 30, () => 0, fixedNow)
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('rejects a turnTimeLimitSeconds value outside {15, 30, 45, 60}', async () => {
+    const { firestore } = fakeDb(new Set());
+    await expect(
+      createRoomHandler(firestore, 'uid-1', profile, 3, 20, () => 0, fixedNow)
     ).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });

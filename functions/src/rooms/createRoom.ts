@@ -5,7 +5,7 @@ import { db } from '../firebaseAdmin';
 import { getProfileOrThrow, type StoredProfile } from '../profiles';
 import { unauthenticated, invalidArgument, internal } from '../errors';
 import { generateRoomCode } from './roomCode';
-import type { RoomDocument } from './types';
+import { TURN_TIME_LIMIT_OPTIONS, type RoomDocument, type TurnTimeLimitSeconds } from './types';
 
 const MAX_ROOM_CODE_ATTEMPTS = 5;
 
@@ -14,6 +14,7 @@ export async function createRoomHandler(
   uid: string,
   profile: StoredProfile,
   maxPlayers: number,
+  turnTimeLimitSeconds: number,
   random: () => number = Math.random,
   now: () => Timestamp = Timestamp.now
 ): Promise<string> {
@@ -22,13 +23,21 @@ export async function createRoomHandler(
       `Liczba graczy musi być liczbą całkowitą od ${MIN_PLAYERS} do ${MAX_PLAYERS}.`
     );
   }
+  if (!(TURN_TIME_LIMIT_OPTIONS as readonly number[]).includes(turnTimeLimitSeconds)) {
+    throw invalidArgument(
+      `Limit czasu na turę musi być jedną z wartości: ${TURN_TIME_LIMIT_OPTIONS.join(', ')} sekund.`
+    );
+  }
 
   const timestamp = now();
   const room: RoomDocument = {
     phase: 'lobby',
     hostId: uid,
     maxPlayers,
-    players: [{ id: uid, name: profile.displayName, avatarId: profile.avatarId }],
+    turnTimeLimitSeconds: turnTimeLimitSeconds as TurnTimeLimitSeconds,
+    players: [
+      { id: uid, name: profile.displayName, avatarId: profile.avatarId, ready: false },
+    ],
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -59,12 +68,20 @@ async function tryCreateRoom(
   });
 }
 
-export const createRoom = onCall<{ maxPlayers: number }>(async (request) => {
-  if (!request.auth) {
-    throw unauthenticated();
+export const createRoom = onCall<{ maxPlayers: number; turnTimeLimitSeconds: number }>(
+  async (request) => {
+    if (!request.auth) {
+      throw unauthenticated();
+    }
+    const uid = request.auth.uid;
+    const profile = await getProfileOrThrow(db, uid);
+    const roomId = await createRoomHandler(
+      db,
+      uid,
+      profile,
+      request.data?.maxPlayers,
+      request.data?.turnTimeLimitSeconds
+    );
+    return { roomId };
   }
-  const uid = request.auth.uid;
-  const profile = await getProfileOrThrow(db, uid);
-  const roomId = await createRoomHandler(db, uid, profile, request.data?.maxPlayers);
-  return { roomId };
-});
+);

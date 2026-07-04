@@ -21,9 +21,10 @@ const twoPlayerLobby: RoomDocument = {
   phase: 'lobby',
   hostId: 'uid-1',
   maxPlayers: 3,
+  turnTimeLimitSeconds: 30,
   players: [
-    { id: 'uid-1', name: 'Ola', avatarId: 'fox' },
-    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf' },
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
+    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
   ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
@@ -34,7 +35,7 @@ describe('leaveRoomHandler', () => {
     const { tx, update } = fakeTransaction(twoPlayerLobby);
     await leaveRoomHandler(tx, roomRef, 'uid-2', fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
-      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox' }],
+      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true }],
       hostId: 'uid-1',
       updatedAt: {},
     });
@@ -44,7 +45,7 @@ describe('leaveRoomHandler', () => {
     const { tx, update } = fakeTransaction(twoPlayerLobby);
     await leaveRoomHandler(tx, roomRef, 'uid-1', fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
-      players: [{ id: 'uid-2', name: 'Kuba', avatarId: 'wolf' }],
+      players: [{ id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true }],
       hostId: 'uid-2',
       updatedAt: {},
     });

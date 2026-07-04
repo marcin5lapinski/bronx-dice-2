@@ -26,7 +26,12 @@ export async function joinRoomHandler(
   if (room.players.length >= room.maxPlayers) {
     throw failedPrecondition('Pokój jest pełny.');
   }
-  const newPlayer: RoomPlayer = { id: uid, name: profile.displayName, avatarId: profile.avatarId };
+  const newPlayer: RoomPlayer = {
+    id: uid,
+    name: profile.displayName,
+    avatarId: profile.avatarId,
+    ready: false,
+  };
   tx.update(roomRef, {
     players: [...room.players, newPlayer],
     updatedAt: now(),

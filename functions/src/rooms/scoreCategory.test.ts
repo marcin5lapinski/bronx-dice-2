@@ -21,9 +21,11 @@ function basePlayingRoom(): RoomDocument {
     phase: 'playing',
     hostId: 'uid-1',
     maxPlayers: 2,
+    turnTimeLimitSeconds: 30,
+    turnStartedAt: {} as Timestamp,
     players: [
-      { id: 'uid-1', name: 'Ola', avatarId: 'fox' },
-      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf' },
+      { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
+      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
     ],
     scoreCards: {
       'uid-1': createEmptyScoreCard(),

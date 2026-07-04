@@ -19,9 +19,10 @@ const lobbyRoom: RoomDocument = {
   phase: 'lobby',
   hostId: 'uid-1',
   maxPlayers: 3,
+  turnTimeLimitSeconds: 30,
   players: [
-    { id: 'uid-1', name: 'Ola', avatarId: 'fox' },
-    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf' },
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
+    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
   ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
