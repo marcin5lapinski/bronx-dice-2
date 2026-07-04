@@ -76,4 +76,32 @@ describe('OnlineGameScreen', () => {
 
     expect(handleTurnTimeout).toHaveBeenCalledWith('AAAAA');
   });
+
+  it('does not replay the roll animation when a new snapshot only changes heldDice', () => {
+    vi.useFakeTimers();
+    const initialRoom = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container, rerender } = render(
+      <OnlineGameScreen room={initialRoom} roomId="AAAAA" ownUid="uid-1" />
+    );
+
+    // Let the initial mount's roll animation (if any) fully settle.
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    // Simulate the Firestore snapshot that arrives after toggling a held
+    // die: a brand-new `dice` array reference with identical values, only
+    // `heldDice` actually differs.
+    const updatedRoom = playingRoom({
+      dice: [1, 2, 3, 4, 5],
+      heldDice: [true, false, false, false, false],
+    });
+    rerender(<OnlineGameScreen room={updatedRoom} roomId="AAAAA" ownUid="uid-1" />);
+
+    const diceButtons = container.querySelectorAll('.dice-tray .die');
+    expect(diceButtons).toHaveLength(5);
+    for (const button of diceButtons) {
+      expect(button).not.toHaveClass('rolling');
+    }
+  });
 });

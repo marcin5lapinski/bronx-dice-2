@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { ScoreCategory } from '@bronx-dice/game-engine';
 import DiceTray from './DiceTray';
 import RollButton from './RollButton';
@@ -25,6 +25,16 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
   const remainingSeconds = useCountdown(room.turnStartedAt, room.turnTimeLimitSeconds);
   const timeoutFiredForTurn = useRef<number | null>(null);
 
+  // Every Firestore snapshot deserializes a brand-new `room` object, so
+  // `room.dice` gets a fresh array reference even when only `heldDice`
+  // changed (e.g. toggling a held die). DiceTray's roll-animation effect
+  // deliberately keys off the `dice` reference to avoid replaying on a
+  // held-toggle, so we stabilize it here to only change when the dice
+  // values themselves actually change.
+  const diceKey = JSON.stringify(room.dice);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableDice = useMemo(() => room.dice, [diceKey]);
+
   useEffect(() => {
     if (remainingSeconds > 0) {
       return;
@@ -47,7 +57,7 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
       </h2>
       <p className="online-turn-countdown">Pozostały czas: {remainingSeconds}s</p>
       <DiceTray
-        dice={room.dice}
+        dice={stableDice}
         heldDice={room.heldDice}
         interactive={isOwnTurn}
         onToggleHeld={(index) => {
@@ -65,7 +75,7 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
         players={room.players}
         scoreCards={room.scoreCards}
         currentPlayerId={currentPlayer.id}
-        dice={room.dice}
+        dice={stableDice}
         rollsLeft={room.rollsLeft}
         interactive={isOwnTurn}
         onScore={(category: ScoreCategory) => {
