@@ -3,6 +3,7 @@ import {
   rollInTurn,
   toggleHeldDie,
   applyScore,
+  applyTimeoutScore,
   isScoreCardComplete,
   isGameOver,
   getWinners,
@@ -62,6 +63,46 @@ describe('applyScore', () => {
     expect(result.dice).toEqual([]);
     expect(result.heldDice).toEqual([false, false, false, false, false]);
     expect(result.rollsLeft).toBe(3);
+  });
+});
+
+describe('applyTimeoutScore', () => {
+  it('writes a zero into the first unfilled upper category and advances the turn', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const olaId = state.players[0].id;
+
+    const result = applyTimeoutScore(state);
+
+    expect(result.scoreCards[olaId].upper.aces).toBe(0);
+    expect(result.currentPlayerIndex).toBe(1);
+    expect(result.dice).toEqual([]);
+    expect(result.rollsLeft).toBe(3);
+  });
+
+  it('writes a zero into the first unfilled lower category once the upper section is filled', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const olaId = state.players[0].id;
+    const filledUpperCard = {
+      ...state.scoreCards[olaId],
+      upper: { aces: 1, twos: 2, threes: 3, fours: 4, fives: 5, sixes: 6 },
+    };
+    const withFilledUpper = {
+      ...state,
+      scoreCards: { ...state.scoreCards, [olaId]: filledUpperCard },
+    };
+
+    const result = applyTimeoutScore(withFilledUpper);
+
+    expect(result.scoreCards[olaId].lower.pair).toBe(0);
+  });
+
+  it('does not double the forced zero even when rollsLeft is DOUBLE_SCORE_ROLLS_LEFT', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const withDoubleRoll = { ...state, rollsLeft: 2 };
+
+    const result = applyTimeoutScore(withDoubleRoll);
+
+    expect(result.scoreCards[state.players[0].id].upper.aces).toBe(0);
   });
 });
 

@@ -1,7 +1,12 @@
 import type { GameState, ScoreCategory, Player, PlayerScoreCard } from './types/game';
 import { UPPER_CATEGORIES, LOWER_CATEGORIES } from './types/game';
 import { rollDice } from './dice';
-import { scoreCategory, calculateTotal } from './scoreCard';
+import {
+  scoreCategory,
+  calculateTotal,
+  findNextScorableCategory,
+  isUpperCategory,
+} from './scoreCard';
 import { nextTurn } from './gameState';
 
 export function rollInTurn(
@@ -36,6 +41,19 @@ export function applyScore(
     state.dice,
     state.rollsLeft
   );
+  return nextTurn({
+    ...state,
+    scoreCards: { ...state.scoreCards, [currentPlayer.id]: updatedScoreCard },
+  });
+}
+
+export function applyTimeoutScore(state: GameState): GameState {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const scoreCard = state.scoreCards[currentPlayer.id];
+  const category = findNextScorableCategory(scoreCard);
+  const updatedScoreCard = isUpperCategory(category)
+    ? { ...scoreCard, upper: { ...scoreCard.upper, [category]: 0 } }
+    : { ...scoreCard, lower: { ...scoreCard.lower, [category]: 0 } };
   return nextTurn({
     ...state,
     scoreCards: { ...state.scoreCards, [currentPlayer.id]: updatedScoreCard },
