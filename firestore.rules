@@ -4,5 +4,9 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+    match /rooms/{roomId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }
