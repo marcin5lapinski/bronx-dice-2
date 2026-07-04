@@ -22,12 +22,11 @@ describe('useCountdown', () => {
 
   it('counts down as time passes', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(1_000_000);
-    const { result } = renderHook(() => useCountdown(fakeTimestamp(1_000_000), 30));
+    const start = Date.now();
+    const { result } = renderHook(() => useCountdown(fakeTimestamp(start), 30));
 
     act(() => {
-      vi.setSystemTime(1_000_000 + 5000);
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(5000);
     });
 
     expect(result.current).toBe(25);
@@ -35,12 +34,11 @@ describe('useCountdown', () => {
 
   it('never goes below zero', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(1_000_000);
-    const { result } = renderHook(() => useCountdown(fakeTimestamp(1_000_000), 30));
+    const start = Date.now();
+    const { result } = renderHook(() => useCountdown(fakeTimestamp(start), 30));
 
     act(() => {
-      vi.setSystemTime(1_000_000 + 60_000);
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(60_000);
     });
 
     expect(result.current).toBe(0);
