@@ -51,6 +51,7 @@ describe('scoreCategoryHandler', () => {
     expect(patch.scoreCards['uid-1'].upper.threes).toBe(6); // two 3s among [3,3,5,5,5]
     expect(patch.currentPlayerIndex).toBe(1);
     expect(patch.phase).toBe('playing');
+    expect(patch.turnStartedAt).toEqual({});
   });
 
   it('sets phase to finished when scoring completes the last open category', async () => {

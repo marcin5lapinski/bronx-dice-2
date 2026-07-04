@@ -42,6 +42,7 @@ export async function scoreCategoryHandler(
   }
   const next = applyScore(room, category);
   const phase = isGameOver(next) ? 'finished' : 'playing';
+  const timestamp = now();
   tx.update(roomRef, {
     scoreCards: next.scoreCards,
     dice: next.dice,
@@ -49,7 +50,8 @@ export async function scoreCategoryHandler(
     rollsLeft: next.rollsLeft,
     currentPlayerIndex: next.currentPlayerIndex,
     phase,
-    updatedAt: now(),
+    turnStartedAt: timestamp,
+    updatedAt: timestamp,
   });
 }
 
