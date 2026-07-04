@@ -104,4 +104,25 @@ describe('OnlineGameScreen', () => {
       expect(button).not.toHaveClass('rolling');
     }
   });
+
+  it('hides the score board preview until the roll animation settles', () => {
+    vi.useFakeTimers();
+    const initialRoom = playingRoom({ dice: [] });
+    const { rerender } = render(
+      <OnlineGameScreen room={initialRoom} roomId="AAAAA" ownUid="uid-1" />
+    );
+
+    const rolledRoom = playingRoom({ dice: [1, 1, 1, 3, 5] });
+    rerender(<OnlineGameScreen room={rolledRoom} roomId="AAAAA" ownUid="uid-1" />);
+
+    // Immediately after the dice values arrive, the preview must still be hidden.
+    const row = screen.getByText('Jedynki').closest('tr')!;
+    expect(row.querySelector('button')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(row.querySelector('button')).not.toBeNull();
+  });
 });

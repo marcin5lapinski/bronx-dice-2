@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScoreCategory } from '@bronx-dice/game-engine';
-import DiceTray from './DiceTray';
+import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
 import RollButton from './RollButton';
 import ScoreBoard from './ScoreBoard';
 import { avatarSrc } from './avatarOptions';
@@ -34,6 +34,22 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
   const diceKey = JSON.stringify(room.dice);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableDice = useMemo(() => room.dice, [diceKey]);
+
+  // While true, the dice are still mid-animation: ScoreBoard's clickable
+  // score previews are hidden so the player can't read the roll's outcome
+  // in the table before the dice visually settle. Mirrors GameScreen's
+  // local-mode isRolling flag; here it's driven by the stabilized dice
+  // reference actually changing to a fresh 5-value roll, not a local click.
+  const [isRolling, setIsRolling] = useState(false);
+
+  useEffect(() => {
+    if (stableDice.length !== 5) {
+      return;
+    }
+    setIsRolling(true);
+    const timer = setTimeout(() => setIsRolling(false), ROLL_ANIMATION_MS);
+    return () => clearTimeout(timer);
+  }, [stableDice]);
 
   useEffect(() => {
     if (remainingSeconds > 0) {
@@ -75,7 +91,7 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
         players={room.players}
         scoreCards={room.scoreCards}
         currentPlayerId={currentPlayer.id}
-        dice={stableDice}
+        dice={isRolling ? [] : stableDice}
         rollsLeft={room.rollsLeft}
         interactive={isOwnTurn}
         onScore={(category: ScoreCategory) => {
