@@ -9,6 +9,7 @@ import {
   type ScoreCategory,
 } from '@bronx-dice/game-engine';
 import { db } from '../firebaseAdmin';
+import { recordGameResults } from '../stats/recordGameResults';
 import { unauthenticated, notFound, failedPrecondition, permissionDenied, invalidArgument } from '../errors';
 import type { RoomDocument } from './types';
 
@@ -53,6 +54,9 @@ export async function scoreCategoryHandler(
     turnStartedAt: timestamp,
     updatedAt: timestamp,
   });
+  if (phase === 'finished') {
+    recordGameResults(tx, db, next, now);
+  }
 }
 
 export const scoreCategory = onCall<{ roomId: string; category: string }>(async (request) => {

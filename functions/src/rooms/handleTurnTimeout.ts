@@ -2,6 +2,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { Timestamp, type Transaction, type DocumentReference } from 'firebase-admin/firestore';
 import { applyTimeoutScore, isGameOver } from '@bronx-dice/game-engine';
 import { db } from '../firebaseAdmin';
+import { recordGameResults } from '../stats/recordGameResults';
 import { unauthenticated, notFound, failedPrecondition, permissionDenied, invalidArgument } from '../errors';
 import type { RoomDocument } from './types';
 
@@ -39,6 +40,9 @@ export async function handleTurnTimeoutHandler(
     turnStartedAt: timestamp,
     updatedAt: timestamp,
   });
+  if (phase === 'finished') {
+    recordGameResults(tx, db, next, now);
+  }
 }
 
 export const handleTurnTimeout = onCall<{ roomId: string }>(async (request) => {

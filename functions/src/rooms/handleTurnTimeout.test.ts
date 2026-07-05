@@ -6,11 +6,13 @@ import type { RoomDocument } from './types';
 
 function fakeTransaction(room: RoomDocument | null) {
   const update = vi.fn();
+  const set = vi.fn();
   const tx = {
     get: async () => ({ exists: room !== null, data: () => room }),
     update,
+    set,
   };
-  return { tx: tx as unknown as Transaction, update };
+  return { tx: tx as unknown as Transaction, update, set };
 }
 
 const roomRef = {} as DocumentReference;
@@ -105,10 +107,13 @@ describe('handleTurnTimeoutHandler', () => {
       upper: { ...filledUpper },
       lower: { ...filledLowerExceptChance, chance: 10 },
     } as never;
-    const { tx, update } = fakeTransaction(room);
+    const { tx, update, set } = fakeTransaction(room);
     await handleTurnTimeoutHandler(tx, roomRef, 'uid-1', fixedNow(15_000));
     const [, patch] = update.mock.calls[0];
     expect(patch.scoreCards['uid-1'].lower.chance).toBe(0);
     expect(patch.phase).toBe('finished');
+
+    expect(update).toHaveBeenCalledTimes(3);
+    expect(set).toHaveBeenCalledTimes(2);
   });
 });
