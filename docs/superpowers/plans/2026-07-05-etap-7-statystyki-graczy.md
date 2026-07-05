@@ -709,9 +709,19 @@ vi.mock('../services/statsService', () => ({
   recordLocalGameResult: vi.fn(),
 }));
 
-async function playSoloGameToCompletion() {
-  const totalCategories = UPPER_CATEGORIES.length + LOWER_CATEGORIES.length;
-  for (let turn = 0; turn < totalCategories; turn++) {
+// The engine enforces MIN_PLAYERS = 2 (createGameState throws below that),
+// so these tests use 2 players even though only player 0's result matters.
+// Every roll is mocked to always show [1,1,1,1,1] (Math.random -> 0), and
+// both players fill categories via "click the first available button" in
+// the same order, so they end up with identical scorecards — a tie, which
+// getWinners() (and this feature's "a tie counts as a win" rule) reports as
+// both players winning. That's why accountPlayerIndex 0's result is always
+// `won: true` below. With 2 players alternating turns, the game needs
+// (UPPER_CATEGORIES.length + LOWER_CATEGORIES.length) * playerCount turns
+// total to fill every category for every player.
+async function playGameToCompletion(playerCount: number) {
+  const totalTurns = (UPPER_CATEGORIES.length + LOWER_CATEGORIES.length) * playerCount;
+  for (let turn = 0; turn < totalTurns; turn++) {
     fireEvent.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
     act(() => {
       vi.advanceTimersByTime(1000);
@@ -857,14 +867,14 @@ describe('GameScreen', () => {
 
     render(
       <GameScreen
-        playerNames={['Ola']}
+        playerNames={['Ola', 'Kuba']}
         accountPlayerIndex={0}
         onPlayAgain={() => {}}
         onExit={() => {}}
       />
     );
 
-    playSoloGameToCompletion();
+    await playGameToCompletion(2);
 
     expect(recordLocalGameResult).toHaveBeenCalledTimes(1);
     expect(recordLocalGameResult).toHaveBeenCalledWith(
@@ -873,7 +883,7 @@ describe('GameScreen', () => {
     );
   });
 
-  it('does not record a result when accountPlayerIndex is null', () => {
+  it('does not record a result when accountPlayerIndex is null', async () => {
     vi.useFakeTimers();
     vi.mocked(useAuth).mockReturnValue({
       user: { uid: 'uid-1' } as User,
@@ -885,32 +895,32 @@ describe('GameScreen', () => {
 
     render(
       <GameScreen
-        playerNames={['Ola']}
+        playerNames={['Ola', 'Kuba']}
         accountPlayerIndex={null}
         onPlayAgain={() => {}}
         onExit={() => {}}
       />
     );
 
-    playSoloGameToCompletion();
+    await playGameToCompletion(2);
 
     expect(recordLocalGameResult).not.toHaveBeenCalled();
   });
 
-  it('does not record a result when signed out, even with a tracked slot', () => {
+  it('does not record a result when signed out, even with a tracked slot', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);
 
     render(
       <GameScreen
-        playerNames={['Ola']}
+        playerNames={['Ola', 'Kuba']}
         accountPlayerIndex={0}
         onPlayAgain={() => {}}
         onExit={() => {}}
       />
     );
 
-    playSoloGameToCompletion();
+    await playGameToCompletion(2);
 
     expect(recordLocalGameResult).not.toHaveBeenCalled();
   });
