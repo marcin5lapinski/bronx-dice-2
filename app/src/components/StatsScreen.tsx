@@ -49,18 +49,24 @@ function StatsScreen({ onBack }: StatsScreenProps) {
   const { user } = useAuth();
   const [localStats, setLocalStats] = useState<GameStats | null>(null);
   const [onlineStats, setOnlineStats] = useState<GameStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       return;
     }
-    getStats(user.uid, 'local').then(setLocalStats);
-    getStats(user.uid, 'online').then(setOnlineStats);
+    getStats(user.uid, 'local')
+      .then(setLocalStats)
+      .catch(() => setError('Nie udało się wczytać statystyk.'));
+    getStats(user.uid, 'online')
+      .then(setOnlineStats)
+      .catch(() => setError('Nie udało się wczytać statystyk.'));
   }, [user]);
 
   return (
     <div className="auth-screen">
       <h1>Statystyki</h1>
+      {error && <p className="auth-error">{error}</p>}
       <StatsSection title="Lokalne" stats={localStats} />
       <StatsSection title="Online" stats={onlineStats} />
       <button type="button" className="back-button" onClick={onBack}>

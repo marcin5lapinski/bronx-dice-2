@@ -72,4 +72,25 @@ describe('StatsScreen', () => {
 
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it('shows an error message when a stats fetch fails', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: fakeUser,
+      profile: null,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    vi.mocked(getStats).mockImplementation(async (_uid, mode) => {
+      if (mode === 'local') {
+        throw new Error('network error');
+      }
+      return { gamesPlayed: 0, wins: 0, averageScore: 0, history: [] };
+    });
+
+    render(<StatsScreen onBack={() => {}} />);
+
+    expect(
+      await screen.findByText('Nie udało się wczytać statystyk.')
+    ).toBeInTheDocument();
+  });
 });
