@@ -88,3 +88,22 @@ describe('shufflePlayerOrder', () => {
     expect(result.slice().sort()).toEqual(names.slice().sort());
   });
 });
+
+describe('shufflePlayerOrder with row objects', () => {
+  it('shuffles PlayerNameRow objects, keeping each id paired with its value', () => {
+    const rows: PlayerNameRow[] = [
+      { id: 'a', value: 'Ola' },
+      { id: 'b', value: 'Kuba' },
+      { id: 'c', value: 'Ala' },
+      { id: 'd', value: 'Zosia' },
+    ];
+    const random = () => 0; // always picks index 0 as the swap target
+    const result = shufflePlayerOrder(rows, random);
+    // Same Fisher-Yates trace as the 4-item string test above, applied to rows:
+    // i=3: swap(3,0) -> [d,b,c,a]
+    // i=2: swap(2,0) -> [c,b,d,a]
+    // i=1: swap(1,0) -> [b,c,d,a]
+    expect(result.map((row) => row.id)).toEqual(['b', 'c', 'd', 'a']);
+    expect(result.find((row) => row.id === 'a')!.value).toBe('Ola');
+  });
+});

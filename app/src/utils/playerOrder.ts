@@ -37,11 +37,11 @@ export function reorderIds(
   return arrayMove(ids, oldIndex, newIndex);
 }
 
-export function shufflePlayerOrder(
-  names: string[],
+export function shufflePlayerOrder<T>(
+  items: T[],
   random: () => number = Math.random
-): string[] {
-  const shuffled = [...names];
+): T[] {
+  const shuffled = [...items];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
