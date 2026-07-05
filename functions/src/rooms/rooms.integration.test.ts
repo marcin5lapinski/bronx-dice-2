@@ -9,6 +9,7 @@ import { toggleHeldDieHandler } from './toggleHeldDie';
 import { scoreCategoryHandler } from './scoreCategory';
 import { handleTurnTimeoutHandler } from './handleTurnTimeout';
 import type { RoomDocument } from './types';
+import { UPPER_CATEGORIES, LOWER_CATEGORIES, canScoreCategory } from '@bronx-dice/game-engine';
 
 const hostProfile = { displayName: 'Ola', avatarId: 'fox' };
 const guestProfile = { displayName: 'Kuba', avatarId: 'wolf' };
@@ -102,4 +103,69 @@ describe('room lifecycle (Firestore emulator)', () => {
     expect(room.players.map((player) => player.id)).toEqual(['uid-guest', 'uid-host']);
     expect(room.currentPlayerIndex).toBe(0);
   });
+
+  it('records online stats for every player once a real game reaches finished', async () => {
+    const roomId = await createRoomHandler(db, 'uid-host', hostProfile, 2, 30);
+    const roomRef = db.collection('rooms').doc(roomId);
+    await db.runTransaction((tx) => joinRoomHandler(tx, roomRef, 'uid-guest', guestProfile));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-host', true));
+    await db.runTransaction((tx) => setReadyHandler(tx, roomRef, 'uid-guest', true));
+    await db.runTransaction((tx) => startGameHandler(tx, roomRef, 'uid-host'));
+
+    // recordGameResults writes to users/{uid} inside the same transaction as
+    // the room's 'finished' transition, so both player docs must exist first
+    // (mirrors production: createRoom/joinRoom's onCall wrappers always
+    // require a profile via getProfileOrThrow before either handler runs;
+    // this test calls the handlers directly, so it seeds the docs itself).
+    await db
+      .collection('users')
+      .doc('uid-host')
+      .set({ displayName: 'Ola', avatarId: 'fox', email: 'ola@example.com' });
+    await db
+      .collection('users')
+      .doc('uid-guest')
+      .set({ displayName: 'Kuba', avatarId: 'wolf', email: 'kuba@example.com' });
+
+    const allCategories = [...UPPER_CATEGORIES, ...LOWER_CATEGORIES];
+
+    let room = await getRoom(roomId);
+    while (room.phase === 'playing') {
+      const currentPlayer = room.players[room.currentPlayerIndex];
+      await db.runTransaction((tx) => rollDiceHandler(tx, roomRef, currentPlayer.id, () => 0));
+      room = await getRoom(roomId);
+      const category = allCategories.find((c) =>
+        canScoreCategory(room.scoreCards[currentPlayer.id], c)
+      )!;
+      await db.runTransaction((tx) => scoreCategoryHandler(tx, roomRef, currentPlayer.id, category));
+      room = await getRoom(roomId);
+    }
+
+    expect(room.phase).toBe('finished');
+
+    const hostDoc = await db.collection('users').doc('uid-host').get();
+    const guestDoc = await db.collection('users').doc('uid-guest').get();
+    expect(hostDoc.data()?.onlineStats).toEqual({
+      gamesPlayed: 1,
+      wins: expect.any(Number),
+      totalScore: expect.any(Number),
+    });
+    expect(guestDoc.data()?.onlineStats).toEqual({
+      gamesPlayed: 1,
+      wins: expect.any(Number),
+      totalScore: expect.any(Number),
+    });
+
+    const hostHistory = await db.collection('users').doc('uid-host').collection('onlineGames').get();
+    const guestHistory = await db.collection('users').doc('uid-guest').collection('onlineGames').get();
+    expect(hostHistory.docs).toHaveLength(1);
+    expect(guestHistory.docs).toHaveLength(1);
+    expect(hostHistory.docs[0].data()).toMatchObject({
+      score: expect.any(Number),
+      won: expect.any(Boolean),
+    });
+    expect(guestHistory.docs[0].data()).toMatchObject({
+      score: expect.any(Number),
+      won: expect.any(Boolean),
+    });
+  }, 20000);
 });
