@@ -46,3 +46,57 @@ describe('rooms/{roomId} security rules', () => {
     await assertFails(alice.firestore().collection('rooms').doc('ABCDE').set({ phase: 'lobby' }));
   });
 });
+
+describe('users/{uid}/localGames/{gameId} security rules', () => {
+  it('allows the owning user to read and write their own local game history', async () => {
+    const alice = testEnv.authenticatedContext('alice');
+    await assertSucceeds(
+      alice
+        .firestore()
+        .collection('users/alice/localGames')
+        .doc('game-1')
+        .set({ score: 100, won: true })
+    );
+    await assertSucceeds(
+      alice.firestore().collection('users/alice/localGames').doc('game-1').get()
+    );
+  });
+
+  it("denies writing to another user's local game history", async () => {
+    const alice = testEnv.authenticatedContext('alice');
+    await assertFails(
+      alice
+        .firestore()
+        .collection('users/bob/localGames')
+        .doc('game-1')
+        .set({ score: 100, won: true })
+    );
+  });
+});
+
+describe('users/{uid}/onlineGames/{gameId} security rules', () => {
+  it('allows the owning user to read their own online game history', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('users/alice/onlineGames')
+        .doc('game-1')
+        .set({ score: 80, won: false });
+    });
+    const alice = testEnv.authenticatedContext('alice');
+    await assertSucceeds(
+      alice.firestore().collection('users/alice/onlineGames').doc('game-1').get()
+    );
+  });
+
+  it('denies any direct client write, even by the owning user', async () => {
+    const alice = testEnv.authenticatedContext('alice');
+    await assertFails(
+      alice
+        .firestore()
+        .collection('users/alice/onlineGames')
+        .doc('game-1')
+        .set({ score: 80, won: false })
+    );
+  });
+});

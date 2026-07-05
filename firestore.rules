@@ -3,6 +3,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /localGames/{gameId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+      match /onlineGames/{gameId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
     }
     match /rooms/{roomId} {
       allow read: if request.auth != null;
