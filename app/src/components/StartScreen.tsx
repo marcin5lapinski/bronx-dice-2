@@ -19,7 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/playerOrder';
 
 interface StartScreenProps {
-  onStart: (playerNames: string[]) => void;
+  onStart: (playerNames: string[], accountPlayerIndex: number | null) => void;
   onOpenAuth: () => void;
   onOpenProfile: () => void;
 }
@@ -87,6 +87,11 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
     }))
   );
   const syncedRowId = useRef<string | null>(rows[0].id);
+  // Stable identity of "your" player slot (row 0 at mount) for local-game
+  // stats attribution. Unlike syncedRowId, this is never cleared by editing
+  // the name and survives drag-reordering/shuffling, since row 0's `id`
+  // itself never changes (handlePlayerCountChange always reuses it).
+  const accountRowId = useRef(rows[0].id);
   const [randomizeOrder, setRandomizeOrder] = useState(false);
 
   const sensors = useSensors(
@@ -138,10 +143,14 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
   const canStart = trimmedNames.every((name) => name.length > 0);
 
   const handleStart = () => {
-    const finalNames = randomizeOrder
-      ? shufflePlayerOrder(trimmedNames)
-      : trimmedNames;
-    onStart(finalNames);
+    const orderedRows = randomizeOrder
+      ? shufflePlayerOrder(visibleRows)
+      : visibleRows;
+    const finalNames = orderedRows.map((row) => row.value.trim());
+    const accountPlayerIndex = user
+      ? orderedRows.findIndex((row) => row.id === accountRowId.current)
+      : -1;
+    onStart(finalNames, accountPlayerIndex === -1 ? null : accountPlayerIndex);
   };
 
   return (

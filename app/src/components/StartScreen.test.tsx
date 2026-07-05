@@ -23,7 +23,7 @@ vi.mock('../services/profileService', () => ({
 
 function renderStartScreen(
   props: {
-    onStart?: (names: string[]) => void;
+    onStart?: (names: string[], accountPlayerIndex: number | null) => void;
     onOpenAuth?: () => void;
     onOpenProfile?: () => void;
   } = {}
@@ -87,7 +87,7 @@ describe('StartScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba']);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null);
   });
 
   it('shows "Zaloguj się" and calls onOpenAuth when signed out', async () => {
@@ -183,7 +183,7 @@ describe('StartScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala']);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala'], null);
   });
 
   it('disables the drag handles when "Losuj kolejność" is checked', async () => {
@@ -228,7 +228,7 @@ describe('StartScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
     // Fisher-Yates on 2 items with random()=0: i=1, j=floor(0*2)=0, swap(1,0)
-    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola']);
+    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola'], null);
   });
 
   it('does not shuffle when "Losuj kolejność" is left unchecked', async () => {
@@ -242,7 +242,7 @@ describe('StartScreen', () => {
     await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba']);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null);
   });
 
   it('auto-fills "Gracz 1" with the signed-in player\'s display name', async () => {
@@ -293,5 +293,88 @@ describe('StartScreen', () => {
     renderStartScreen();
 
     expect(screen.getByLabelText('Gracz 1')).toHaveValue('Gracz 1');
+  });
+
+  it("passes the signed-in player's row index as accountPlayerIndex", async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValueOnce({
+      displayName: 'Ola Nick',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    });
+
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    renderStartScreen({ onStart });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
+    );
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    expect(onStart).toHaveBeenCalledWith(['Ola Nick', 'Kuba'], 0);
+  });
+
+  it('keeps tracking the account row after it is manually renamed', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValueOnce({
+      displayName: 'Ola Nick',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    });
+
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    renderStartScreen({ onStart });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
+    );
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Pseudonim');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    expect(onStart).toHaveBeenCalledWith(['Pseudonim', 'Kuba'], 0);
+  });
+
+  it('keeps tracking the account row through "Losuj kolejność"', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValueOnce({
+      displayName: 'Ola Nick',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    });
+
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    renderStartScreen({ onStart });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
+    );
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    await user.click(screen.getByLabelText('Losuj kolejność'));
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    // Fisher-Yates on 2 items with random()=0: i=1, j=0, swap(1,0) -> ['Kuba', 'Ola Nick']
+    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola Nick'], 1);
   });
 });
