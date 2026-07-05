@@ -1,19 +1,75 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { User } from 'firebase/auth';
+import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '@bronx-dice/game-engine';
 import GameScreen from './GameScreen';
+import { useAuth } from '../contexts/AuthContext';
+import { recordLocalGameResult } from '../services/statsService';
+
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: vi.fn(),
+}));
+
+vi.mock('../services/statsService', () => ({
+  recordLocalGameResult: vi.fn(),
+}));
+
+// The engine enforces MIN_PLAYERS = 2 (createGameState throws below that),
+// so these tests use 2 players even though only player 0's result matters.
+// Every roll is mocked to always show [1,1,1,1,1] (Math.random -> 0), and
+// both players fill categories via "click the first available button" in
+// the same order, so they end up with identical scorecards — a tie, which
+// getWinners() (and this feature's "a tie counts as a win" rule) reports as
+// both players winning. That's why accountPlayerIndex 0's result is always
+// `won: true` below. With 2 players alternating turns, the game needs
+// (UPPER_CATEGORIES.length + LOWER_CATEGORIES.length) * playerCount turns
+// total to fill every category for every player.
+async function playGameToCompletion(playerCount: number) {
+  const totalTurns = (UPPER_CATEGORIES.length + LOWER_CATEGORIES.length) * playerCount;
+  for (let turn = 0; turn < totalTurns; turn++) {
+    fireEvent.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    const scoreButtons = document.querySelectorAll('.score-board tbody button');
+    fireEvent.click(scoreButtons[0]);
+  }
+}
 
 describe('GameScreen', () => {
+  beforeEach(() => {
+    // vi.restoreAllMocks() (below, in afterEach) only restores vi.spyOn
+    // spies to their original implementation — it does NOT clear call
+    // history on a plain vi.fn() like this module mock, so without an
+    // explicit mockClear() here, recordLocalGameResult's calls from one
+    // test leak into the next test's assertions.
+    vi.mocked(recordLocalGameResult).mockClear();
+    vi.mocked(useAuth).mockReturnValue({
+      user: null,
+      profile: null,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    vi.mocked(recordLocalGameResult).mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('rolls dice and displays the results when the roll button is clicked', async () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every die shows 1
     render(
-      <GameScreen playerNames={['Ola', 'Kuba']} onPlayAgain={() => {}} onExit={() => {}} />
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
     );
 
     await user.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
@@ -35,7 +91,12 @@ describe('GameScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every die = 1 -> aces score = 5
     render(
-      <GameScreen playerNames={['Ola', 'Kuba']} onPlayAgain={() => {}} onExit={() => {}} />
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
     );
 
     await user.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
@@ -48,7 +109,12 @@ describe('GameScreen', () => {
     const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every die = 1 -> aces score = 5
     render(
-      <GameScreen playerNames={['Ola', 'Kuba']} onPlayAgain={() => {}} onExit={() => {}} />
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
     );
 
     expect(screen.getByText('Tura: Ola')).toBeInTheDocument();
@@ -70,7 +136,12 @@ describe('GameScreen', () => {
     const onExit = vi.fn();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(
-      <GameScreen playerNames={['Ola', 'Kuba']} onPlayAgain={() => {}} onExit={onExit} />
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={onExit}
+      />
     );
 
     await user.click(screen.getByRole('button', { name: 'Wyjdź z gry' }));
@@ -84,11 +155,86 @@ describe('GameScreen', () => {
     const onExit = vi.fn();
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(
-      <GameScreen playerNames={['Ola', 'Kuba']} onPlayAgain={() => {}} onExit={onExit} />
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={onExit}
+      />
     );
 
     await user.click(screen.getByRole('button', { name: 'Wyjdź z gry' }));
 
     expect(onExit).not.toHaveBeenCalled();
+  });
+
+  it("records the account player's result once the game ends, when logged in with a tracked slot", async () => {
+    vi.useFakeTimers();
+    vi.mocked(useAuth).mockReturnValue({
+      user: { uid: 'uid-1' } as User,
+      profile: null,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={0}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
+    );
+
+    await playGameToCompletion(2);
+
+    expect(recordLocalGameResult).toHaveBeenCalledTimes(1);
+    expect(recordLocalGameResult).toHaveBeenCalledWith(
+      'uid-1',
+      expect.objectContaining({ won: true })
+    );
+  });
+
+  it('does not record a result when accountPlayerIndex is null', async () => {
+    vi.useFakeTimers();
+    vi.mocked(useAuth).mockReturnValue({
+      user: { uid: 'uid-1' } as User,
+      profile: null,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
+    );
+
+    await playGameToCompletion(2);
+
+    expect(recordLocalGameResult).not.toHaveBeenCalled();
+  });
+
+  it('does not record a result when signed out, even with a tracked slot', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        accountPlayerIndex={0}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
+    );
+
+    await playGameToCompletion(2);
+
+    expect(recordLocalGameResult).not.toHaveBeenCalled();
   });
 });

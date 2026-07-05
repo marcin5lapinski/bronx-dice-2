@@ -16,7 +16,7 @@ type AuthScreenName = 'login' | 'register' | 'forgot-password';
 
 type Screen =
   | { kind: 'local-start' }
-  | { kind: 'local-game'; playerNames: string[] }
+  | { kind: 'local-game'; playerNames: string[]; accountPlayerIndex: number | null }
   | { kind: 'auth-gate'; authScreen: AuthScreenName }
   | { kind: 'profile' }
   | { kind: 'online-room'; roomId: string };
@@ -46,6 +46,7 @@ function App() {
     return (
       <GameScreen
         playerNames={screen.playerNames}
+        accountPlayerIndex={screen.accountPlayerIndex}
         onPlayAgain={() => setScreen({ kind: 'local-start' })}
         onExit={() => setScreen({ kind: 'local-start' })}
       />
@@ -131,7 +132,9 @@ function App() {
 
   return (
     <StartScreen
-      onStart={(playerNames) => setScreen({ kind: 'local-game', playerNames })}
+      onStart={(playerNames, accountPlayerIndex) =>
+        setScreen({ kind: 'local-game', playerNames, accountPlayerIndex })
+      }
       onOpenAuth={() => setScreen({ kind: 'auth-gate', authScreen: 'login' })}
       onOpenProfile={() => setScreen({ kind: 'profile' })}
     />

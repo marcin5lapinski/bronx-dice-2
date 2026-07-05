@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createGameState,
   rollInTurn,
@@ -6,6 +6,7 @@ import {
   applyScore,
   isGameOver,
   getWinners,
+  calculateTotal,
   type GameState,
   type ScoreCategory,
 } from '@bronx-dice/game-engine';
@@ -13,14 +14,23 @@ import DiceTray, { ROLL_ANIMATION_MS } from './DiceTray';
 import RollButton from './RollButton';
 import ScoreBoard from './ScoreBoard';
 import WinnerScreen from './WinnerScreen';
+import { useAuth } from '../contexts/AuthContext';
+import { recordLocalGameResult } from '../services/statsService';
 
 interface GameScreenProps {
   playerNames: string[];
+  accountPlayerIndex: number | null;
   onPlayAgain: () => void;
   onExit: () => void;
 }
 
-function GameScreen({ playerNames, onPlayAgain, onExit }: GameScreenProps) {
+function GameScreen({
+  playerNames,
+  accountPlayerIndex,
+  onPlayAgain,
+  onExit,
+}: GameScreenProps) {
+  const { user } = useAuth();
   const [state, setState] = useState<GameState>(() =>
     createGameState(playerNames)
   );
@@ -28,6 +38,7 @@ function GameScreen({ playerNames, onPlayAgain, onExit }: GameScreenProps) {
   // score previews are hidden so the player can't read the roll's outcome
   // in the table before the dice visually settle.
   const [isRolling, setIsRolling] = useState(false);
+  const resultRecorded = useRef(false);
 
   useEffect(() => {
     if (!isRolling) {
@@ -36,6 +47,26 @@ function GameScreen({ playerNames, onPlayAgain, onExit }: GameScreenProps) {
     const timer = setTimeout(() => setIsRolling(false), ROLL_ANIMATION_MS);
     return () => clearTimeout(timer);
   }, [isRolling]);
+
+  // Records the tracked account slot's result exactly once, the first time
+  // the game ends. Best-effort: a failed write must never disrupt the
+  // winner screen. Guarded by a ref (not just the isGameOver check) so
+  // StrictMode's double-invoked effects in dev can't record it twice.
+  useEffect(() => {
+    if (!isGameOver(state) || resultRecorded.current) {
+      return;
+    }
+    resultRecorded.current = true;
+    if (accountPlayerIndex === null || !user) {
+      return;
+    }
+    const player = state.players[accountPlayerIndex];
+    const score = calculateTotal(state.scoreCards[player.id]);
+    const won = getWinners(state).some((winner) => winner.id === player.id);
+    recordLocalGameResult(user.uid, { score, won }).catch(() => {
+      // Best-effort — a failed write must never disrupt the winner screen.
+    });
+  }, [state, accountPlayerIndex, user]);
 
   if (isGameOver(state)) {
     return (
