@@ -39,13 +39,49 @@ function renderStartScreen(
   );
 }
 
+async function openLocalForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Zagraj lokalnie' }));
+}
+
 describe('StartScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('renders 2 name inputs by default', () => {
+  it('hides the local game form until "Zagraj lokalnie" is clicked', () => {
     renderStartScreen();
+
+    expect(screen.queryByLabelText('Gracz 1')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Rozpocznij grę' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('reveals the local game form when "Zagraj lokalnie" is clicked', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await openLocalForm(user);
+
+    expect(screen.getByLabelText('Gracz 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rozpocznij grę' })).toBeInTheDocument();
+  });
+
+  it('hides the local game form again when "Zagraj lokalnie" is clicked twice', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await openLocalForm(user);
+    await openLocalForm(user);
+
+    expect(screen.queryByLabelText('Gracz 1')).not.toBeInTheDocument();
+  });
+
+  it('renders 2 name inputs by default', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+    await openLocalForm(user);
+
     expect(screen.getByLabelText('Gracz 1')).toBeInTheDocument();
     expect(screen.getByLabelText('Gracz 2')).toBeInTheDocument();
     expect(screen.queryByLabelText('Gracz 3')).not.toBeInTheDocument();
@@ -54,6 +90,7 @@ describe('StartScreen', () => {
   it('adds more name inputs when player count increases, preserving existing names', async () => {
     const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -67,6 +104,7 @@ describe('StartScreen', () => {
   it('disables the start button when a name is blank', async () => {
     const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
 
@@ -79,6 +117,7 @@ describe('StartScreen', () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), '  Ola  ');
@@ -157,8 +196,10 @@ describe('StartScreen', () => {
     expect(onOpenAuth).not.toHaveBeenCalled();
   });
 
-  it('renders a drag handle for each player row, labeled by position', () => {
+  it('renders a drag handle for each player row, labeled by position', async () => {
+    const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     expect(
       screen.getByRole('button', { name: 'Zmień kolejność: Gracz 1' })
@@ -172,6 +213,7 @@ describe('StartScreen', () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -189,6 +231,7 @@ describe('StartScreen', () => {
   it('disables the drag handles when "Losuj kolejność" is checked', async () => {
     const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await user.click(screen.getByLabelText('Losuj kolejność'));
 
@@ -203,6 +246,7 @@ describe('StartScreen', () => {
   it('does not change the visible input order when the checkbox is checked', async () => {
     const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -219,6 +263,7 @@ describe('StartScreen', () => {
     const onStart = vi.fn();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -235,6 +280,7 @@ describe('StartScreen', () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
@@ -257,7 +303,9 @@ describe('StartScreen', () => {
       createdAt: 1700000000000,
     });
 
+    const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await waitFor(() =>
       expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
@@ -278,6 +326,7 @@ describe('StartScreen', () => {
 
     const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     await waitFor(() =>
       expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
@@ -289,8 +338,10 @@ describe('StartScreen', () => {
     expect(screen.getByLabelText('Gracz 1')).toHaveValue('Custom');
   });
 
-  it('does not touch "Gracz 1" when signed out', () => {
+  it('does not touch "Gracz 1" when signed out', async () => {
+    const user = userEvent.setup();
     renderStartScreen();
+    await openLocalForm(user);
 
     expect(screen.getByLabelText('Gracz 1')).toHaveValue('Gracz 1');
   });
@@ -310,6 +361,7 @@ describe('StartScreen', () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await waitFor(() =>
       expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
@@ -336,6 +388,7 @@ describe('StartScreen', () => {
     const user = userEvent.setup();
     const onStart = vi.fn();
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await waitFor(() =>
       expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')
@@ -365,6 +418,7 @@ describe('StartScreen', () => {
     const onStart = vi.fn();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     renderStartScreen({ onStart });
+    await openLocalForm(user);
 
     await waitFor(() =>
       expect(screen.getByLabelText('Gracz 1')).toHaveValue('Ola Nick')

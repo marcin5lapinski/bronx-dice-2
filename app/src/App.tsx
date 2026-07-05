@@ -68,6 +68,14 @@ function App() {
     if (loading) {
       return <p>Ładowanie…</p>;
     }
+    if (!user || !profile) {
+      // Authenticated but missing a profile doc (e.g. it was deleted, or a
+      // cached session outlived the backend's data) — send them through the
+      // auth-gate flow, which already knows how to recover a missing
+      // profile via ProfileSetupScreen, instead of a dead-end blank screen.
+      setScreen({ kind: 'auth-gate', authScreen: 'login' });
+      return <p>Ładowanie…</p>;
+    }
     return (
       <ProfileScreen
         onSignedOut={() => setScreen({ kind: 'local-start' })}

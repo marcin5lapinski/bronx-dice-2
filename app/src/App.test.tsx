@@ -69,13 +69,14 @@ describe('App', () => {
   it('shows the start screen first', () => {
     renderApp();
     expect(screen.getByAltText('Bronx Dice')).toBeInTheDocument();
-    expect(screen.getByLabelText('Liczba graczy')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zagraj lokalnie' })).toBeInTheDocument();
   });
 
   it('starts the game after entering names and clicking start', async () => {
     const user = userEvent.setup();
     renderApp();
 
+    await user.click(screen.getByRole('button', { name: 'Zagraj lokalnie' }));
     await user.clear(screen.getByLabelText('Gracz 1'));
     await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
     await user.clear(screen.getByLabelText('Gracz 2'));
@@ -103,7 +104,9 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Hasło'), 'haslo123');
     await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
 
-    expect(await screen.findByLabelText('Liczba graczy')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Zagraj lokalnie' })
+    ).toBeInTheDocument();
   });
 
   it('shows the online menu once logged in with a complete profile', async () => {
@@ -163,6 +166,24 @@ describe('App', () => {
     await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
 
     expect(await screen.findByText('Ładowanie…')).toBeInTheDocument();
+  });
+
+  it('shows profile setup instead of a blank screen when logged in but the profile doc is missing', async () => {
+    const fakeUser = { uid: 'uid-1' } as User;
+    vi.mocked(subscribeToAuthState).mockImplementation((callback: (user: User | null) => void) => {
+      callback(fakeUser);
+      return () => {};
+    });
+    // Resolves with null (not pending, not rejected) — simulates a
+    // genuinely missing users/{uid} doc, e.g. after wiping the Firestore
+    // emulator while a browser session is still authenticated.
+    vi.mocked(getProfile).mockResolvedValue(null);
+
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
+
+    expect(await screen.findByRole('heading', { name: 'Uzupełnij profil' })).toBeInTheDocument();
   });
 
   it('restores a previously joined online room from localStorage', async () => {

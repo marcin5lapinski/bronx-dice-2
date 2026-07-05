@@ -93,6 +93,7 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
   // itself never changes (handlePlayerCountChange always reuses it).
   const accountRowId = useRef(rows[0].id);
   const [randomizeOrder, setRandomizeOrder] = useState(false);
+  const [showLocalForm, setShowLocalForm] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -168,57 +169,68 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
       <button type="button" onClick={user ? onOpenProfile : onOpenAuth}>
         {user ? 'Profil gracza' : 'Zaloguj się'}
       </button>
-      <label htmlFor="player-count">Liczba graczy</label>
-      <select
-        id="player-count"
-        value={playerCount}
-        onChange={(event) =>
-          handlePlayerCountChange(Number(event.target.value))
-        }
-      >
-        {Array.from(
-          { length: MAX_PLAYERS - MIN_PLAYERS + 1 },
-          (_, i) => MIN_PLAYERS + i
-        ).map((count) => (
-          <option key={count} value={count}>
-            {count}
-          </option>
-        ))}
-      </select>
-
-      <label className="randomize-order-label">
-        <input
-          type="checkbox"
-          checked={randomizeOrder}
-          onChange={(event) => setRandomizeOrder(event.target.checked)}
-        />
-        Losuj kolejność
-      </label>
-
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <SortableContext
-          items={visibleRows.map((row) => row.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {visibleRows.map((row, index) => (
-            <PlayerRowField
-              key={row.id}
-              row={row}
-              label={defaultName(index)}
-              dragDisabled={randomizeOrder}
-              onChange={handleNameChange}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
-
       <button
         type="button"
-        disabled={!canStart}
-        onClick={handleStart}
+        onClick={() => setShowLocalForm((current) => !current)}
       >
-        Rozpocznij grę
+        Zagraj lokalnie
       </button>
+
+      {showLocalForm && (
+        <>
+          <label htmlFor="player-count">Liczba graczy</label>
+          <select
+            id="player-count"
+            value={playerCount}
+            onChange={(event) =>
+              handlePlayerCountChange(Number(event.target.value))
+            }
+          >
+            {Array.from(
+              { length: MAX_PLAYERS - MIN_PLAYERS + 1 },
+              (_, i) => MIN_PLAYERS + i
+            ).map((count) => (
+              <option key={count} value={count}>
+                {count}
+              </option>
+            ))}
+          </select>
+
+          <label className="randomize-order-label">
+            <input
+              type="checkbox"
+              checked={randomizeOrder}
+              onChange={(event) => setRandomizeOrder(event.target.checked)}
+            />
+            Losuj kolejność
+          </label>
+
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={visibleRows.map((row) => row.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {visibleRows.map((row, index) => (
+                <PlayerRowField
+                  key={row.id}
+                  row={row}
+                  label={defaultName(index)}
+                  dragDisabled={randomizeOrder}
+                  onChange={handleNameChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+
+          <button
+            type="button"
+            disabled={!canStart}
+            onClick={handleStart}
+          >
+            Rozpocznij grę
+          </button>
+        </>
+      )}
     </div>
   );
 }
