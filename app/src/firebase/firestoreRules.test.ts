@@ -99,4 +99,18 @@ describe('users/{uid}/onlineGames/{gameId} security rules', () => {
         .set({ score: 80, won: false })
     );
   });
+
+  it("denies a non-owner from reading another user's online game history", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('users/alice/onlineGames')
+        .doc('game-1')
+        .set({ score: 80, won: false });
+    });
+    const bob = testEnv.authenticatedContext('bob');
+    await assertFails(
+      bob.firestore().collection('users/alice/onlineGames').doc('game-1').get()
+    );
+  });
 });
