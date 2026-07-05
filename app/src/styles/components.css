@@ -723,3 +723,22 @@
   border-color: var(--accent-blue);
   box-shadow: 0 0 8px var(--accent-blue-glow);
 }
+
+/* StatsScreen */
+.stats-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.stats-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
