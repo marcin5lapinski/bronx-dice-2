@@ -21,6 +21,14 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock('./StatsScreen', () => ({
+  default: ({ onBack }: { onBack: () => void }) => (
+    <button type="button" onClick={onBack}>
+      Wstecz ze statystyk (stub)
+    </button>
+  ),
+}));
+
 const fakeUser = { uid: 'uid-1' } as User;
 const fakeProfile: PlayerProfile = {
   displayName: 'Ola',
@@ -107,5 +115,24 @@ describe('ProfileScreen', () => {
 
     expect(signOutUser).toHaveBeenCalled();
     expect(onSignedOut).toHaveBeenCalled();
+  });
+
+  it('navigates to the stats screen and back', async () => {
+    const user = userEvent.setup();
+    vi.mocked(useAuth).mockReturnValue({
+      user: fakeUser,
+      profile: fakeProfile,
+      loading: false,
+      refreshProfile: vi.fn(),
+    });
+    render(<ProfileScreen onSignedOut={() => {}} onBackToLocal={() => {}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Statystyki' }));
+    expect(
+      screen.getByRole('button', { name: 'Wstecz ze statystyk (stub)' })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Wstecz ze statystyk (stub)' }));
+    expect(screen.getByRole('heading', { name: 'Profil gracza' })).toBeInTheDocument();
   });
 });
