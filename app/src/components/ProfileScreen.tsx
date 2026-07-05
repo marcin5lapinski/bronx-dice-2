@@ -79,7 +79,7 @@ function ProfileScreen({ onSignedOut, onBackToLocal }: ProfileScreenProps) {
         Wyloguj
       </button>
       <button type="button" onClick={onBackToLocal}>
-        Graj lokalnie
+        Wstecz
       </button>
     </div>
   );
