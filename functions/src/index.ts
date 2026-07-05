@@ -10,3 +10,6 @@ export { scoreCategory } from './rooms/scoreCategory';
 export { leaveRoom } from './rooms/leaveRoom';
 export { setReady } from './rooms/setReady';
 export { handleTurnTimeout } from './rooms/handleTurnTimeout';
+export { heartbeat } from './rooms/heartbeat';
+export { removeInactivePlayers } from './rooms/removeInactivePlayers';
+export { returnToLobby } from './rooms/returnToLobby';

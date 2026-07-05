@@ -21,8 +21,8 @@ function lobbyRoom(overrides: Partial<LobbyRoom> = {}): LobbyRoom {
     maxPlayers: 4,
     turnTimeLimitSeconds: 30,
     players: [
-      { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: false },
-      { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+      { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: false, lastActiveAt: {} as never },
+      { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true, lastActiveAt: {} as never },
     ],
     createdAt: {} as never,
     updatedAt: {} as never,
@@ -58,8 +58,8 @@ describe('RoomLobbyScreen', () => {
   it('enables Start for the host once every player is ready', () => {
     const room = lobbyRoom({
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true, lastActiveAt: {} as never },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true, lastActiveAt: {} as never },
       ],
     });
     render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
@@ -76,8 +76,8 @@ describe('RoomLobbyScreen', () => {
     vi.mocked(startGame).mockResolvedValue(undefined);
     const room = lobbyRoom({
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true, lastActiveAt: {} as never },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true, lastActiveAt: {} as never },
       ],
     });
     render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
@@ -115,8 +115,8 @@ describe('RoomLobbyScreen', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const room = lobbyRoom({
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true, lastActiveAt: {} as never },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true, lastActiveAt: {} as never },
       ],
     });
     render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);

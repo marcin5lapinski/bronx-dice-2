@@ -4,6 +4,7 @@ import type { Timestamp } from 'firebase-admin/firestore';
 export interface RoomPlayer extends Player {
   avatarId: string;
   ready: boolean;
+  lastActiveAt: Timestamp;
 }
 
 export const TURN_TIME_LIMIT_OPTIONS = [15, 30, 45, 60] as const;

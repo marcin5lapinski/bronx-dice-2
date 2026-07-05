@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createEmptyScoreCard } from '@bronx-dice/game-engine';
 import OnlineGameScreen from './OnlineGameScreen';
-import { rollDice, handleTurnTimeout } from '../services/roomService';
+import {
+  rollDice,
+  handleTurnTimeout,
+  removeInactivePlayers,
+  returnToLobby,
+} from '../services/roomService';
 import type { RoomDocument } from '../types/room';
 
 vi.mock('../services/roomService', () => ({
@@ -12,6 +17,8 @@ vi.mock('../services/roomService', () => ({
   toggleHeldDie: vi.fn().mockResolvedValue(undefined),
   scoreCategory: vi.fn().mockResolvedValue(undefined),
   handleTurnTimeout: vi.fn().mockResolvedValue(undefined),
+  removeInactivePlayers: vi.fn().mockResolvedValue(undefined),
+  returnToLobby: vi.fn().mockResolvedValue(undefined),
 }));
 
 type PlayingRoom = Extract<RoomDocument, { phase: 'playing' }>;
@@ -24,8 +31,20 @@ function playingRoom(overrides: Partial<PlayingRoom> = {}): PlayingRoom {
     turnTimeLimitSeconds: 30,
     turnStartedAt: { toMillis: () => Date.now() } as never,
     players: [
-      { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true },
-      { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true },
+      {
+        id: 'uid-1',
+        name: 'Ola',
+        avatarId: 'avatar01',
+        ready: true,
+        lastActiveAt: { toMillis: () => Date.now() } as never,
+      },
+      {
+        id: 'uid-2',
+        name: 'Kuba',
+        avatarId: 'avatar02',
+        ready: true,
+        lastActiveAt: { toMillis: () => Date.now() } as never,
+      },
     ],
     scoreCards: {
       'uid-1': createEmptyScoreCard(),
@@ -146,5 +165,97 @@ describe('OnlineGameScreen', () => {
 
     expect(window.confirm).toHaveBeenCalled();
     expect(onExit).toHaveBeenCalled();
+  });
+
+  it('does not show host presence controls to a non-host player', () => {
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-2" onExit={() => {}} />
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Usuń nieaktywnych graczy' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Przerwij grę i wróć do pokoju' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables both presence buttons for the host while every other player is still active', () => {
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+    expect(screen.getByRole('button', { name: 'Usuń nieaktywnych graczy' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Przerwij grę i wróć do pokoju' })
+    ).toBeDisabled();
+  });
+
+  it('enables "Usuń nieaktywnych graczy" once another player goes inactive and calls it after confirming', () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    const room = playingRoom({
+      players: [
+        {
+          id: 'uid-1',
+          name: 'Ola',
+          avatarId: 'avatar01',
+          ready: true,
+          lastActiveAt: { toMillis: () => start } as never,
+        },
+        {
+          id: 'uid-2',
+          name: 'Kuba',
+          avatarId: 'avatar02',
+          ready: true,
+          lastActiveAt: { toMillis: () => start } as never,
+        },
+      ],
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />);
+
+    act(() => {
+      vi.advanceTimersByTime(46_000);
+    });
+
+    const button = screen.getByRole('button', { name: 'Usuń nieaktywnych graczy' });
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+
+    expect(removeInactivePlayers).toHaveBeenCalledWith('AAAAA');
+  });
+
+  it('enables "Przerwij grę i wróć do pokoju" only once every other player is inactive', () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    const room = playingRoom({
+      players: [
+        {
+          id: 'uid-1',
+          name: 'Ola',
+          avatarId: 'avatar01',
+          ready: true,
+          lastActiveAt: { toMillis: () => Date.now() } as never,
+        },
+        {
+          id: 'uid-2',
+          name: 'Kuba',
+          avatarId: 'avatar02',
+          ready: true,
+          lastActiveAt: { toMillis: () => start } as never,
+        },
+      ],
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />);
+
+    act(() => {
+      vi.advanceTimersByTime(46_000);
+    });
+
+    const button = screen.getByRole('button', { name: 'Przerwij grę i wróć do pokoju' });
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+
+    expect(returnToLobby).toHaveBeenCalledWith('AAAAA');
   });
 });

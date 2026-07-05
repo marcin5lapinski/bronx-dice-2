@@ -36,7 +36,13 @@ export async function createRoomHandler(
     maxPlayers,
     turnTimeLimitSeconds: turnTimeLimitSeconds as TurnTimeLimitSeconds,
     players: [
-      { id: uid, name: profile.displayName, avatarId: profile.avatarId, ready: false },
+      {
+        id: uid,
+        name: profile.displayName,
+        avatarId: profile.avatarId,
+        ready: false,
+        lastActiveAt: timestamp,
+      },
     ],
     createdAt: timestamp,
     updatedAt: timestamp,

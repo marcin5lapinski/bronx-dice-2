@@ -60,3 +60,18 @@ export async function handleTurnTimeout(roomId: string): Promise<void> {
   const call = httpsCallable<{ roomId: string }, void>(functions, 'handleTurnTimeout');
   await call({ roomId });
 }
+
+export async function heartbeat(roomId: string): Promise<void> {
+  const call = httpsCallable<{ roomId: string }, void>(functions, 'heartbeat');
+  await call({ roomId });
+}
+
+export async function removeInactivePlayers(roomId: string): Promise<void> {
+  const call = httpsCallable<{ roomId: string }, void>(functions, 'removeInactivePlayers');
+  await call({ roomId });
+}
+
+export async function returnToLobby(roomId: string): Promise<void> {
+  const call = httpsCallable<{ roomId: string }, void>(functions, 'returnToLobby');
+  await call({ roomId });
+}

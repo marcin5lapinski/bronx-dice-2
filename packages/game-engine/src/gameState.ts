@@ -48,3 +48,49 @@ export function nextTurn(state: GameState): GameState {
     rollsLeft: MAX_ROLLS,
   };
 }
+
+export function removePlayers(state: GameState, playerIds: string[]): GameState {
+  const removeSet = new Set(playerIds);
+  if (removeSet.size === 0) {
+    return state;
+  }
+
+  const currentPlayerId = state.players[state.currentPlayerIndex]?.id;
+  const players = state.players.filter((player) => !removeSet.has(player.id));
+  const scoreCards = Object.fromEntries(
+    Object.entries(state.scoreCards).filter(([id]) => !removeSet.has(id))
+  );
+
+  if (players.length === 0) {
+    return { ...state, players, scoreCards, currentPlayerIndex: 0 };
+  }
+
+  if (currentPlayerId !== undefined && !removeSet.has(currentPlayerId)) {
+    return {
+      ...state,
+      players,
+      scoreCards,
+      currentPlayerIndex: players.findIndex((player) => player.id === currentPlayerId),
+    };
+  }
+
+  // The current player was removed: advance to the next surviving player in
+  // the original turn order and reset the turn, same as nextTurn would.
+  const originalPlayers = state.players;
+  for (let step = 1; step <= originalPlayers.length; step++) {
+    const candidate = originalPlayers[(state.currentPlayerIndex + step) % originalPlayers.length];
+    if (!removeSet.has(candidate.id)) {
+      return {
+        ...state,
+        players,
+        scoreCards,
+        currentPlayerIndex: players.findIndex((player) => player.id === candidate.id),
+        dice: createEmptyDice(),
+        heldDice: [false, false, false, false, false],
+        rollsLeft: MAX_ROLLS,
+      };
+    }
+  }
+
+  return { ...state, players, scoreCards, currentPlayerIndex: 0 };
+}

@@ -35,6 +35,9 @@ vi.mock('./services/roomService', () => ({
   toggleHeldDie: vi.fn(),
   scoreCategory: vi.fn(),
   handleTurnTimeout: vi.fn(),
+  heartbeat: vi.fn().mockResolvedValue(undefined),
+  removeInactivePlayers: vi.fn(),
+  returnToLobby: vi.fn(),
 }));
 
 vi.mock('./hooks/useRoom', () => ({

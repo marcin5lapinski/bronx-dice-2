@@ -5,13 +5,21 @@ import RollButton from './RollButton';
 import ScoreBoard from './ScoreBoard';
 import { avatarSrc } from './avatarOptions';
 import { useCountdown } from '../hooks/useCountdown';
+import { useNow } from '../hooks/useNow';
+import { isPlayerInactive } from '../utils/presence';
 import {
   rollDice,
   toggleHeldDie,
   scoreCategory,
   handleTurnTimeout,
+  removeInactivePlayers,
+  returnToLobby,
 } from '../services/roomService';
 import type { RoomDocument, RoomPlayer } from '../types/room';
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Coś poszło nie tak. Spróbuj ponownie.';
+}
 
 interface OnlineGameScreenProps {
   room: Extract<RoomDocument, { phase: 'playing' }>;
@@ -25,6 +33,15 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const isOwnTurn = currentPlayer.id === ownUid;
   const remainingSeconds = useCountdown(room.turnStartedAt, room.turnTimeLimitSeconds);
   const timeoutFiredForTurn = useRef<number | null>(null);
+  const now = useNow();
+  const [presenceError, setPresenceError] = useState<string | null>(null);
+
+  const isHost = room.hostId === ownUid;
+  const otherPlayers = (room.players as RoomPlayer[]).filter((player) => player.id !== ownUid);
+  const inactiveOthers = otherPlayers.filter((player) => isPlayerInactive(player.lastActiveAt, now));
+  const canRemoveInactive = isHost && inactiveOthers.length > 0;
+  const canAbort =
+    isHost && otherPlayers.every((player) => isPlayerInactive(player.lastActiveAt, now));
 
   // Every Firestore snapshot deserializes a brand-new `room` object, so
   // `room.dice` gets a fresh array reference even when only `heldDice`
@@ -72,11 +89,38 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
     }
   };
 
+  const handleRemoveInactive = () => {
+    if (!window.confirm('Usunąć nieaktywnych graczy z rozgrywki?')) {
+      return;
+    }
+    setPresenceError(null);
+    removeInactivePlayers(roomId).catch((err: unknown) => setPresenceError(errorMessage(err)));
+  };
+
+  const handleAbort = () => {
+    if (!window.confirm('Przerwać rozgrywkę i wrócić do pokoju?')) {
+      return;
+    }
+    setPresenceError(null);
+    returnToLobby(roomId).catch((err: unknown) => setPresenceError(errorMessage(err)));
+  };
+
   return (
     <div className="online-game-screen">
       <button type="button" className="back-button" onClick={handleExit}>
         Wyjdź z gry
       </button>
+      {isHost && (
+        <div className="host-presence-controls">
+          <button type="button" disabled={!canRemoveInactive} onClick={handleRemoveInactive}>
+            Usuń nieaktywnych graczy
+          </button>
+          <button type="button" disabled={!canAbort} onClick={handleAbort}>
+            Przerwij grę i wróć do pokoju
+          </button>
+        </div>
+      )}
+      {presenceError && <p className="auth-error">{presenceError}</p>}
       <h2>
         Tura: {currentPlayer.name}
         <img className="online-turn-avatar" src={avatarSrc(currentPlayer.avatarId)} alt="" />

@@ -4,10 +4,11 @@ interface WinnerScreenProps {
   winners: Player[];
   players: Player[];
   scoreCards: Record<string, PlayerScoreCard>;
-  onPlayAgain: () => void;
+  onPlayAgain?: () => void;
+  onExit?: () => void;
 }
 
-function WinnerScreen({ winners, players, scoreCards, onPlayAgain }: WinnerScreenProps) {
+function WinnerScreen({ winners, players, scoreCards, onPlayAgain, onExit }: WinnerScreenProps) {
   const names = winners.map((winner) => winner.name).join(' i ');
   const heading =
     winners.length === 1 ? `Zwycięzca: ${names}!` : `Remis: ${names}!`;
@@ -27,9 +28,18 @@ function WinnerScreen({ winners, players, scoreCards, onPlayAgain }: WinnerScree
           </li>
         ))}
       </ol>
-      <button type="button" onClick={onPlayAgain}>
-        Zagraj ponownie
-      </button>
+      {onPlayAgain ? (
+        <button type="button" onClick={onPlayAgain}>
+          Zagraj ponownie
+        </button>
+      ) : (
+        onExit && <p>Oczekiwanie na hosta…</p>
+      )}
+      {onExit && (
+        <button type="button" className="back-button" onClick={onExit}>
+          Wyjdź z pokoju
+        </button>
+      )}
     </div>
   );
 }

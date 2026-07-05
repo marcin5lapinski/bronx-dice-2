@@ -283,6 +283,17 @@
   font-size: 13px;
 }
 
+.winner-screen .back-button {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border);
+  box-shadow: none;
+  padding: 4px 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  font-size: 11px;
+}
+
 /* Back/exit buttons */
 .back-button {
   align-self: flex-start;
@@ -334,6 +345,29 @@
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+.host-presence-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.host-presence-controls button {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.host-presence-controls button:not(:disabled):hover {
+  color: var(--text);
+  border-color: var(--accent-blue);
 }
 
 /* OnlineMenuScreen (Etap 6) */

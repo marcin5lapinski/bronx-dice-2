@@ -21,7 +21,9 @@ const lobbyRoom: RoomDocument = {
   hostId: 'uid-1',
   maxPlayers: 3,
   turnTimeLimitSeconds: 30,
-  players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true }],
+  players: [
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+  ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
 };
@@ -32,8 +34,8 @@ describe('joinRoomHandler', () => {
     await joinRoomHandler(tx, roomRef, 'uid-2', profile, fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false, lastActiveAt: {} },
       ],
       updatedAt: {},
     });

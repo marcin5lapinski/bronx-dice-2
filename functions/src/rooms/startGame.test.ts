@@ -21,8 +21,8 @@ const lobbyRoom: RoomDocument = {
   maxPlayers: 3,
   turnTimeLimitSeconds: 30,
   players: [
-    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true, lastActiveAt: {} as Timestamp },
   ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
@@ -47,8 +47,8 @@ describe('startGameHandler', () => {
     await startGameHandler(tx, roomRef, 'uid-1', ['uid-2', 'uid-1'], fixedNow);
     const [, patch] = update.mock.calls[0];
     expect(patch.players).toEqual([
-      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
-      { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
+      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true, lastActiveAt: {} },
+      { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} },
     ]);
     expect(patch.currentPlayerIndex).toBe(0);
   });
@@ -78,8 +78,8 @@ describe('startGameHandler', () => {
     const notAllReady: RoomDocument = {
       ...lobbyRoom,
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false, lastActiveAt: {} as Timestamp },
       ],
     };
     const { tx } = fakeTransaction(notAllReady);

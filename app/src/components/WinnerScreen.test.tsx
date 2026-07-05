@@ -95,4 +95,59 @@ describe('WinnerScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Zagraj ponownie' }));
     expect(onPlayAgain).toHaveBeenCalledTimes(1);
   });
+
+  it('shows a waiting message and no "Zagraj ponownie" button when onPlayAgain is absent', () => {
+    const winners: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const players: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const scoreCards = { 'player-1': scoreCardWithTotal(50) };
+    render(
+      <WinnerScreen
+        winners={winners}
+        players={players}
+        scoreCards={scoreCards}
+        onExit={() => {}}
+      />
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Zagraj ponownie' })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Oczekiwanie na hosta…')).toBeInTheDocument();
+  });
+
+  it('calls onExit when "Wyjdź z pokoju" is clicked', async () => {
+    const user = userEvent.setup();
+    const onExit = vi.fn();
+    const winners: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const players: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const scoreCards = { 'player-1': scoreCardWithTotal(50) };
+    render(
+      <WinnerScreen
+        winners={winners}
+        players={players}
+        scoreCards={scoreCards}
+        onPlayAgain={() => {}}
+        onExit={onExit}
+      />
+    );
+    await user.click(screen.getByRole('button', { name: 'Wyjdź z pokoju' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders neither the waiting message nor an exit button for local play (no onExit)', () => {
+    const winners: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const players: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const scoreCards = { 'player-1': scoreCardWithTotal(50) };
+    render(
+      <WinnerScreen
+        winners={winners}
+        players={players}
+        scoreCards={scoreCards}
+        onPlayAgain={() => {}}
+      />
+    );
+    expect(screen.queryByText('Oczekiwanie na hosta…')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Wyjdź z pokoju' })
+    ).not.toBeInTheDocument();
+  });
 });

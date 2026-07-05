@@ -4,6 +4,8 @@ import RoomLobbyScreen from './RoomLobbyScreen';
 import OnlineGameScreen from './OnlineGameScreen';
 import WinnerScreen from './WinnerScreen';
 import { useRoom } from '../hooks/useRoom';
+import { usePresenceHeartbeat } from '../hooks/usePresenceHeartbeat';
+import { returnToLobby } from '../services/roomService';
 
 interface OnlineRoomScreenProps {
   roomId: string;
@@ -13,6 +15,7 @@ interface OnlineRoomScreenProps {
 
 function OnlineRoomScreen({ roomId, ownUid, onLeft }: OnlineRoomScreenProps) {
   const { room, loading, notFound } = useRoom(roomId);
+  usePresenceHeartbeat(roomId);
 
   useEffect(() => {
     if (notFound) {
@@ -36,12 +39,14 @@ function OnlineRoomScreen({ roomId, ownUid, onLeft }: OnlineRoomScreenProps) {
     return <OnlineGameScreen room={room} roomId={roomId} ownUid={ownUid} onExit={onLeft} />;
   }
 
+  const isHost = room.hostId === ownUid;
   return (
     <WinnerScreen
       winners={getWinners(room)}
       players={room.players}
       scoreCards={room.scoreCards}
-      onPlayAgain={onLeft}
+      onPlayAgain={isHost ? () => { void returnToLobby(roomId); } : undefined}
+      onExit={onLeft}
     />
   );
 }

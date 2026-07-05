@@ -21,8 +21,8 @@ const lobbyRoom: RoomDocument = {
   maxPlayers: 3,
   turnTimeLimitSeconds: 30,
   players: [
-    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: false },
-    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: false, lastActiveAt: {} as Timestamp },
+    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false, lastActiveAt: {} as Timestamp },
   ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
@@ -34,8 +34,8 @@ describe('setReadyHandler', () => {
     await setReadyHandler(tx, roomRef, 'uid-1', true, fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false, lastActiveAt: {} },
       ],
       updatedAt: {},
     });
@@ -45,8 +45,8 @@ describe('setReadyHandler', () => {
     const readyRoom: RoomDocument = {
       ...lobbyRoom,
       players: [
-        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false },
+        { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: false, lastActiveAt: {} as Timestamp },
       ],
     };
     const { tx, update } = fakeTransaction(readyRoom);

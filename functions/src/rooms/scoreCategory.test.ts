@@ -24,8 +24,8 @@ function basePlayingRoom(): RoomDocument {
     turnTimeLimitSeconds: 30,
     turnStartedAt: {} as Timestamp,
     players: [
-      { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
+      { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+      { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true, lastActiveAt: {} as Timestamp },
     ],
     scoreCards: {
       'uid-1': createEmptyScoreCard(),

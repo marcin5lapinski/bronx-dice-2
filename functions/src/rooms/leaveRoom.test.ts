@@ -23,8 +23,8 @@ const twoPlayerLobby: RoomDocument = {
   maxPlayers: 3,
   turnTimeLimitSeconds: 30,
   players: [
-    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true },
-    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true },
+    { id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} as Timestamp },
+    { id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true, lastActiveAt: {} as Timestamp },
   ],
   createdAt: {} as Timestamp,
   updatedAt: {} as Timestamp,
@@ -35,7 +35,7 @@ describe('leaveRoomHandler', () => {
     const { tx, update } = fakeTransaction(twoPlayerLobby);
     await leaveRoomHandler(tx, roomRef, 'uid-2', fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
-      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true }],
+      players: [{ id: 'uid-1', name: 'Ola', avatarId: 'fox', ready: true, lastActiveAt: {} }],
       hostId: 'uid-1',
       updatedAt: {},
     });
@@ -45,7 +45,7 @@ describe('leaveRoomHandler', () => {
     const { tx, update } = fakeTransaction(twoPlayerLobby);
     await leaveRoomHandler(tx, roomRef, 'uid-1', fixedNow);
     expect(update).toHaveBeenCalledWith(roomRef, {
-      players: [{ id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true }],
+      players: [{ id: 'uid-2', name: 'Kuba', avatarId: 'wolf', ready: true, lastActiveAt: {} }],
       hostId: 'uid-2',
       updatedAt: {},
     });
