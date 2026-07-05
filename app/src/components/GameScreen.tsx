@@ -61,6 +61,9 @@ function GameScreen({
       return;
     }
     const player = state.players[accountPlayerIndex];
+    if (!player) {
+      return;
+    }
     const score = calculateTotal(state.scoreCards[player.id]);
     const won = getWinners(state).some((winner) => winner.id === player.id);
     recordLocalGameResult(user.uid, { score, won }).catch(() => {
