@@ -77,7 +77,7 @@ Celem nowej wersji jest przepisanie gry w React + TypeScript, z zachowaniem tych
 - Podpięcie planszy gry z Etapu 2/3 do stanu z Firestore (`onSnapshot`) zamiast lokalnego state — reużycie komponentów UI.
 - Obsługa rozłączenia i ponownego dołączenia gracza w trakcie gry.
 
-### Etap 7 (opcjonalnie, niski priorytet) — Statystyki graczy
+### Etap 7 (opcjonalnie, niski priorytet) — Statystyki graczy — UKOŃCZONE
 - Zapis historii rozgrywek (lokalnych i online) do Firestore, powiązanej z kontem gracza.
 - Ekran statystyk: liczba gier, wygrane, historia punktów per gracz.
 
