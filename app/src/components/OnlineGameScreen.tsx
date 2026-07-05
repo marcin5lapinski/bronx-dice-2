@@ -7,6 +7,7 @@ import { avatarSrc } from './avatarOptions';
 import { useCountdown } from '../hooks/useCountdown';
 import { useNow } from '../hooks/useNow';
 import { isPlayerInactive } from '../utils/presence';
+import { playSound, isSoundMuted, setSoundMuted } from '../utils/sound';
 import {
   rollDice,
   toggleHeldDie,
@@ -33,8 +34,10 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const isOwnTurn = currentPlayer.id === ownUid;
   const remainingSeconds = useCountdown(room.turnStartedAt, room.turnTimeLimitSeconds);
   const timeoutFiredForTurn = useRef<number | null>(null);
+  const previousPlayerIndexRef = useRef(room.currentPlayerIndex);
   const now = useNow();
   const [presenceError, setPresenceError] = useState<string | null>(null);
+  const [soundMuted, setSoundMutedState] = useState(() => isSoundMuted());
 
   // toggleHeldDie is a Cloud Function call: the click only becomes visible
   // once the round trip (call -> Firestore write -> our own snapshot
@@ -102,10 +105,28 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
     });
   }, [remainingSeconds, room.currentPlayerIndex, roomId]);
 
+  // Plays only on the device whose turn it now is, and only when the turn
+  // actually advances (not on mount/reconnect) — a local notification that
+  // it's your move, never heard by the other players.
+  useEffect(() => {
+    if (previousPlayerIndexRef.current !== room.currentPlayerIndex) {
+      previousPlayerIndexRef.current = room.currentPlayerIndex;
+      if (isOwnTurn) {
+        playSound('your-turn');
+      }
+    }
+  }, [room.currentPlayerIndex, isOwnTurn]);
+
   const handleExit = () => {
     if (window.confirm('Czy na pewno chcesz opuścić grę? Twoje tury będą pomijane po czasie.')) {
       onExit();
     }
+  };
+
+  const handleToggleSound = () => {
+    const next = !soundMuted;
+    setSoundMuted(next);
+    setSoundMutedState(next);
   };
 
   const handleRemoveInactive = () => {
@@ -136,6 +157,9 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
     <div className="online-game-screen">
       <button type="button" className="back-button" onClick={handleExit}>
         Wyjdź z gry
+      </button>
+      <button type="button" className="back-button" onClick={handleToggleSound}>
+        {soundMuted ? 'Włącz dźwięki' : 'Wyłącz dźwięki'}
       </button>
       {isHost && (
         <div className="host-presence-controls">

@@ -11,6 +11,7 @@ import {
   removeInactivePlayers,
   returnToLobby,
 } from '../services/roomService';
+import { playSound, isSoundMuted, setSoundMuted } from '../utils/sound';
 import type { RoomDocument } from '../types/room';
 
 vi.mock('../services/roomService', () => ({
@@ -20,6 +21,12 @@ vi.mock('../services/roomService', () => ({
   handleTurnTimeout: vi.fn().mockResolvedValue(undefined),
   removeInactivePlayers: vi.fn().mockResolvedValue(undefined),
   returnToLobby: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../utils/sound', () => ({
+  playSound: vi.fn(),
+  isSoundMuted: vi.fn().mockReturnValue(false),
+  setSoundMuted: vi.fn(),
 }));
 
 type PlayingRoom = Extract<RoomDocument, { phase: 'playing' }>;
@@ -65,6 +72,12 @@ describe('OnlineGameScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
+    // vi.restoreAllMocks() only resets vi.spyOn spies, not the call history
+    // of a plain vi.fn() created inside a vi.mock() factory — clear it
+    // explicitly so the your-turn sound assertions don't leak across tests.
+    vi.mocked(playSound).mockClear();
+    vi.mocked(setSoundMuted).mockClear();
+    vi.mocked(isSoundMuted).mockReturnValue(false);
   });
 
   it("shows the current player's name and calls rollDice on their own turn", async () => {
@@ -299,5 +312,89 @@ describe('OnlineGameScreen', () => {
     });
 
     expect(dieButtons[0]).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('does not play the your-turn sound on initial mount, even if it is already your turn', () => {
+    render(
+      <OnlineGameScreen
+        room={playingRoom({ currentPlayerIndex: 0 })}
+        roomId="AAAAA"
+        ownUid="uid-1"
+        onExit={() => {}}
+      />
+    );
+
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  it('plays the your-turn sound when the turn advances to you', () => {
+    const { rerender } = render(
+      <OnlineGameScreen
+        room={playingRoom({ currentPlayerIndex: 1 })}
+        roomId="AAAAA"
+        ownUid="uid-1"
+        onExit={() => {}}
+      />
+    );
+
+    rerender(
+      <OnlineGameScreen
+        room={playingRoom({ currentPlayerIndex: 0 })}
+        roomId="AAAAA"
+        ownUid="uid-1"
+        onExit={() => {}}
+      />
+    );
+
+    expect(playSound).toHaveBeenCalledWith('your-turn');
+    expect(playSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not play the your-turn sound when the turn advances to another player', () => {
+    const { rerender } = render(
+      <OnlineGameScreen
+        room={playingRoom({ currentPlayerIndex: 0 })}
+        roomId="AAAAA"
+        ownUid="uid-1"
+        onExit={() => {}}
+      />
+    );
+
+    rerender(
+      <OnlineGameScreen
+        room={playingRoom({ currentPlayerIndex: 1 })}
+        roomId="AAAAA"
+        ownUid="uid-1"
+        onExit={() => {}}
+      />
+    );
+
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  it('shows "Wyłącz dźwięki" and mutes sounds when clicked, while sounds are unmuted', () => {
+    vi.mocked(isSoundMuted).mockReturnValue(false);
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const button = screen.getByRole('button', { name: 'Wyłącz dźwięki' });
+    fireEvent.click(button);
+
+    expect(setSoundMuted).toHaveBeenCalledWith(true);
+    expect(screen.getByRole('button', { name: 'Włącz dźwięki' })).toBeInTheDocument();
+  });
+
+  it('shows "Włącz dźwięki" and unmutes sounds when clicked, while sounds are muted', () => {
+    vi.mocked(isSoundMuted).mockReturnValue(true);
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const button = screen.getByRole('button', { name: 'Włącz dźwięki' });
+    fireEvent.click(button);
+
+    expect(setSoundMuted).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('button', { name: 'Wyłącz dźwięki' })).toBeInTheDocument();
   });
 });

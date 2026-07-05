@@ -6,7 +6,58 @@ import { createEmptyScoreCard } from '@bronx-dice/game-engine';
 import OnlineRoomScreen from './OnlineRoomScreen';
 import { useRoom } from '../hooks/useRoom';
 import { returnToLobby } from '../services/roomService';
+import { playSound } from '../utils/sound';
 import type { RoomDocument } from '../types/room';
+
+function lobbyRoom(): Extract<RoomDocument, { phase: 'lobby' }> {
+  return {
+    phase: 'lobby',
+    hostId: 'uid-1',
+    maxPlayers: 4,
+    turnTimeLimitSeconds: 30,
+    players: [
+      { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: false, lastActiveAt: {} as never },
+    ],
+    createdAt: {} as never,
+    updatedAt: {} as never,
+  };
+}
+
+function playingRoom(): Extract<RoomDocument, { phase: 'playing' }> {
+  return {
+    phase: 'playing',
+    hostId: 'uid-1',
+    maxPlayers: 2,
+    turnTimeLimitSeconds: 30,
+    turnStartedAt: { toMillis: () => Date.now() } as never,
+    players: [
+      {
+        id: 'uid-1',
+        name: 'Ola',
+        avatarId: 'avatar01',
+        ready: true,
+        lastActiveAt: { toMillis: () => Date.now() } as never,
+      },
+      {
+        id: 'uid-2',
+        name: 'Kuba',
+        avatarId: 'avatar02',
+        ready: true,
+        lastActiveAt: { toMillis: () => Date.now() } as never,
+      },
+    ],
+    scoreCards: {
+      'uid-1': createEmptyScoreCard(),
+      'uid-2': createEmptyScoreCard(),
+    },
+    dice: [],
+    heldDice: [false, false, false, false, false],
+    rollsLeft: 3,
+    currentPlayerIndex: 0,
+    createdAt: {} as never,
+    updatedAt: {} as never,
+  };
+}
 
 function finishedRoom(): Extract<RoomDocument, { phase: 'finished' }> {
   const scoreCards = { 'uid-1': createEmptyScoreCard() };
@@ -47,9 +98,19 @@ vi.mock('../services/roomService', () => ({
   returnToLobby: vi.fn(),
 }));
 
+vi.mock('../utils/sound', () => ({
+  playSound: vi.fn(),
+  isSoundMuted: vi.fn().mockReturnValue(false),
+  setSoundMuted: vi.fn(),
+}));
+
 describe('OnlineRoomScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // vi.restoreAllMocks() only resets vi.spyOn spies, not the call history
+    // of a plain vi.fn() created inside a vi.mock() factory — clear it
+    // explicitly so the start-game sound assertions don't leak across tests.
+    vi.mocked(playSound).mockClear();
   });
 
   it('shows a loading message while the room is loading', () => {
@@ -134,5 +195,46 @@ describe('OnlineRoomScreen', () => {
     const onLeft = vi.fn();
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={onLeft} />);
     await waitFor(() => expect(onLeft).toHaveBeenCalled());
+  });
+
+  it('plays the start-game sound when the room transitions from lobby to playing', () => {
+    vi.mocked(useRoom).mockReturnValue({ room: lobbyRoom(), loading: false, notFound: false });
+    const { rerender } = render(
+      <OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />
+    );
+
+    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    expect(playSound).toHaveBeenCalledWith('start-game');
+    expect(playSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not play the start-game sound when mounting directly into an already-playing room', () => {
+    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    expect(playSound).not.toHaveBeenCalled();
+  });
+
+  it('does not replay the start-game sound on later playing-phase updates', () => {
+    vi.mocked(useRoom).mockReturnValue({ room: lobbyRoom(), loading: false, notFound: false });
+    const { rerender } = render(
+      <OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />
+    );
+
+    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    // A later snapshot update while still 'playing' (e.g. a roll) must not
+    // replay the sound.
+    vi.mocked(useRoom).mockReturnValue({
+      room: { ...playingRoom(), dice: [1, 2, 3, 4, 5] },
+      loading: false,
+      notFound: false,
+    });
+    rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    expect(playSound).toHaveBeenCalledTimes(1);
   });
 });
