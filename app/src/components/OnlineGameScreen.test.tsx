@@ -6,6 +6,7 @@ import { createEmptyScoreCard } from '@bronx-dice/game-engine';
 import OnlineGameScreen from './OnlineGameScreen';
 import {
   rollDice,
+  toggleHeldDie,
   handleTurnTimeout,
   removeInactivePlayers,
   returnToLobby,
@@ -257,5 +258,46 @@ describe('OnlineGameScreen', () => {
     fireEvent.click(button);
 
     expect(returnToLobby).toHaveBeenCalledWith('AAAAA');
+  });
+
+  it('shows a die as held immediately on click, before the server call resolves', async () => {
+    let resolveToggle!: () => void;
+    vi.mocked(toggleHeldDie).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveToggle = () => resolve(undefined);
+        })
+    );
+    const room = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container } = render(
+      <OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const dieButtons = container.querySelectorAll('.dice-tray .die');
+    fireEvent.click(dieButtons[0]);
+
+    // The click handler's promise is still pending (no snapshot has come back
+    // from the server yet) — the UI must still reflect the toggle right away.
+    expect(dieButtons[0]).toHaveAttribute('aria-pressed', 'true');
+
+    resolveToggle();
+  });
+
+  it('reverts the optimistic held state if the server call fails', async () => {
+    vi.mocked(toggleHeldDie).mockRejectedValueOnce(new Error('network error'));
+    const room = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container } = render(
+      <OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const dieButtons = container.querySelectorAll('.dice-tray .die');
+    fireEvent.click(dieButtons[0]);
+    expect(dieButtons[0]).toHaveAttribute('aria-pressed', 'true');
+
+    await act(async () => {
+      await Promise.resolve().then(() => Promise.resolve());
+    });
+
+    expect(dieButtons[0]).toHaveAttribute('aria-pressed', 'false');
   });
 });

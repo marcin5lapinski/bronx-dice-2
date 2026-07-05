@@ -36,6 +36,25 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const now = useNow();
   const [presenceError, setPresenceError] = useState<string | null>(null);
 
+  // toggleHeldDie is a Cloud Function call: the click only becomes visible
+  // once the round trip (call -> Firestore write -> our own snapshot
+  // listener) completes. That's a full network latency the local hot-seat
+  // mode never pays (there it's a synchronous setState). Held-die toggling
+  // therefore optimistically flips the pressed die immediately, then
+  // reconciles with (or reverts to) the server's own heldDice once it lands.
+  const [optimisticHeldDice, setOptimisticHeldDice] = useState<boolean[] | null>(null);
+  const displayedHeldDice = optimisticHeldDice ?? room.heldDice;
+
+  useEffect(() => {
+    setOptimisticHeldDice(null);
+  }, [room.currentPlayerIndex]);
+
+  useEffect(() => {
+    if (optimisticHeldDice?.every((held, i) => held === room.heldDice[i])) {
+      setOptimisticHeldDice(null);
+    }
+  }, [room.heldDice, optimisticHeldDice]);
+
   const isHost = room.hostId === ownUid;
   const otherPlayers = (room.players as RoomPlayer[]).filter((player) => player.id !== ownUid);
   const inactiveOthers = otherPlayers.filter((player) => isPlayerInactive(player.lastActiveAt, now));
@@ -97,6 +116,14 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
     removeInactivePlayers(roomId).catch((err: unknown) => setPresenceError(errorMessage(err)));
   };
 
+  const handleToggleHeld = (index: number) => {
+    const base = optimisticHeldDice ?? room.heldDice;
+    setOptimisticHeldDice(base.map((held, i) => (i === index ? !held : held)));
+    toggleHeldDie(roomId, index).catch(() => {
+      setOptimisticHeldDice(null);
+    });
+  };
+
   const handleAbort = () => {
     if (!window.confirm('Przerwać rozgrywkę i wrócić do pokoju?')) {
       return;
@@ -128,11 +155,9 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
       <p className="online-turn-countdown">Pozostały czas: {remainingSeconds}s</p>
       <DiceTray
         dice={stableDice}
-        heldDice={room.heldDice}
+        heldDice={displayedHeldDice}
         interactive={isOwnTurn}
-        onToggleHeld={(index) => {
-          void toggleHeldDie(roomId, index);
-        }}
+        onToggleHeld={handleToggleHeld}
       />
       <RollButton
         rollsLeft={room.rollsLeft}

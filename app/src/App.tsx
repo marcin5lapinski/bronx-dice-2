@@ -64,6 +64,9 @@ function App() {
   }
 
   if (screen.kind === 'profile') {
+    if (loading) {
+      return <p>Ładowanie…</p>;
+    }
     return (
       <ProfileScreen
         onSignedOut={() => setScreen({ kind: 'local-start' })}
@@ -97,7 +100,7 @@ function App() {
       }
       return (
         <LoginScreen
-          onSuccess={() => {}}
+          onSuccess={() => setScreen({ kind: 'local-start' })}
           onNavigateToRegister={() => setScreen({ kind: 'auth-gate', authScreen: 'register' })}
           onNavigateToForgotPassword={() =>
             setScreen({ kind: 'auth-gate', authScreen: 'forgot-password' })
@@ -111,7 +114,7 @@ function App() {
       return (
         <ProfileSetupScreen
           user={user}
-          onComplete={() => {}}
+          onComplete={() => setScreen({ kind: 'local-start' })}
           onCancel={() => setScreen({ kind: 'local-start' })}
         />
       );

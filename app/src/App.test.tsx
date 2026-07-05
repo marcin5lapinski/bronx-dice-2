@@ -94,6 +94,18 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Zaloguj się' })).toBeInTheDocument();
   });
 
+  it('returns to the start screen after a successful login, not the online menu', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+    await user.type(screen.getByLabelText('E-mail'), 'ola@example.com');
+    await user.type(screen.getByLabelText('Hasło'), 'haslo123');
+    await user.click(screen.getByRole('button', { name: 'Zaloguj się' }));
+
+    expect(await screen.findByLabelText('Liczba graczy')).toBeInTheDocument();
+  });
+
   it('shows the online menu once logged in with a complete profile', async () => {
     const fakeUser = { uid: 'uid-1' } as User;
     const fakeProfile: PlayerProfile = {
@@ -134,6 +146,23 @@ describe('App', () => {
     await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
 
     expect(await screen.findByRole('heading', { name: 'Profil gracza' })).toBeInTheDocument();
+  });
+
+  it('shows a loading indicator on the profile screen while the profile is still being fetched', async () => {
+    const fakeUser = { uid: 'uid-1' } as User;
+    vi.mocked(subscribeToAuthState).mockImplementation((callback: (user: User | null) => void) => {
+      callback(fakeUser);
+      return () => {};
+    });
+    // Never resolves — simulates clicking through to the profile screen
+    // before the Firestore profile fetch has finished.
+    vi.mocked(getProfile).mockReturnValue(new Promise(() => {}));
+
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
+
+    expect(await screen.findByText('Ładowanie…')).toBeInTheDocument();
   });
 
   it('restores a previously joined online room from localStorage', async () => {
