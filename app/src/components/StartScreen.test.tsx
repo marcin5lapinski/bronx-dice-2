@@ -22,13 +22,18 @@ vi.mock('../services/profileService', () => ({
 }));
 
 function renderStartScreen(
-  props: { onStart?: (names: string[]) => void; onOpenAuth?: () => void } = {}
+  props: {
+    onStart?: (names: string[]) => void;
+    onOpenAuth?: () => void;
+    onOpenProfile?: () => void;
+  } = {}
 ) {
   return render(
     <AuthProvider>
       <StartScreen
         onStart={props.onStart ?? (() => {})}
         onOpenAuth={props.onOpenAuth ?? (() => {})}
+        onOpenProfile={props.onOpenProfile ?? (() => {})}
       />
     </AuthProvider>
   );
@@ -110,6 +115,46 @@ describe('StartScreen', () => {
     expect(
       screen.queryByRole('button', { name: 'Zaloguj się' })
     ).not.toBeInTheDocument();
+  });
+
+  it('does not show "Zagraj online" when signed out', () => {
+    renderStartScreen();
+
+    expect(
+      screen.queryByRole('button', { name: 'Zagraj online' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows "Zagraj online" and calls onOpenAuth when signed in', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+
+    const user = userEvent.setup();
+    const onOpenAuth = vi.fn();
+    renderStartScreen({ onOpenAuth });
+
+    await user.click(screen.getByRole('button', { name: 'Zagraj online' }));
+
+    expect(onOpenAuth).toHaveBeenCalled();
+  });
+
+  it('calls onOpenProfile instead of onOpenAuth when "Profil gracza" is clicked', async () => {
+    vi.mocked(subscribeToAuthState).mockImplementationOnce((callback) => {
+      callback({ uid: 'uid-1' } as User);
+      return () => {};
+    });
+
+    const user = userEvent.setup();
+    const onOpenAuth = vi.fn();
+    const onOpenProfile = vi.fn();
+    renderStartScreen({ onOpenAuth, onOpenProfile });
+
+    await user.click(screen.getByRole('button', { name: 'Profil gracza' }));
+
+    expect(onOpenProfile).toHaveBeenCalled();
+    expect(onOpenAuth).not.toHaveBeenCalled();
   });
 
   it('renders a drag handle for each player row, labeled by position', () => {

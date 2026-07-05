@@ -17,9 +17,10 @@ import WinnerScreen from './WinnerScreen';
 interface GameScreenProps {
   playerNames: string[];
   onPlayAgain: () => void;
+  onExit: () => void;
 }
 
-function GameScreen({ playerNames, onPlayAgain }: GameScreenProps) {
+function GameScreen({ playerNames, onPlayAgain, onExit }: GameScreenProps) {
   const [state, setState] = useState<GameState>(() =>
     createGameState(playerNames)
   );
@@ -40,6 +41,7 @@ function GameScreen({ playerNames, onPlayAgain }: GameScreenProps) {
     return (
       <WinnerScreen
         winners={getWinners(state)}
+        players={state.players}
         scoreCards={state.scoreCards}
         onPlayAgain={onPlayAgain}
       />
@@ -48,8 +50,17 @@ function GameScreen({ playerNames, onPlayAgain }: GameScreenProps) {
 
   const currentPlayer = state.players[state.currentPlayerIndex];
 
+  const handleExit = () => {
+    if (window.confirm('Czy na pewno chcesz zakończyć grę?')) {
+      onExit();
+    }
+  };
+
   return (
     <div className="game-screen">
+      <button type="button" className="back-button" onClick={handleExit}>
+        Wyjdź z gry
+      </button>
       <h2>Tura: {currentPlayer.name}</h2>
       <DiceTray
         dice={state.dice}

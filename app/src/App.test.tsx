@@ -107,9 +107,30 @@ describe('App', () => {
 
     const user = userEvent.setup();
     renderApp();
-    await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
+    await user.click(await screen.findByRole('button', { name: 'Zagraj online' }));
 
     expect(await screen.findByText('Gra online')).toBeInTheDocument();
+  });
+
+  it('shows the profile screen directly from "Profil gracza" when logged in', async () => {
+    const fakeUser = { uid: 'uid-1' } as User;
+    const fakeProfile: PlayerProfile = {
+      displayName: 'Ola',
+      avatarId: 'avatar01',
+      email: 'ola@example.com',
+      createdAt: 1700000000000,
+    };
+    vi.mocked(subscribeToAuthState).mockImplementation((callback: (user: User | null) => void) => {
+      callback(fakeUser);
+      return () => {};
+    });
+    vi.mocked(getProfile).mockResolvedValue(fakeProfile);
+
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Profil gracza' }));
+
+    expect(await screen.findByRole('heading', { name: 'Profil gracza' })).toBeInTheDocument();
   });
 
   it('restores a previously joined online room from localStorage', async () => {

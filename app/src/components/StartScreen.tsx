@@ -21,6 +21,7 @@ import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/p
 interface StartScreenProps {
   onStart: (playerNames: string[]) => void;
   onOpenAuth: () => void;
+  onOpenProfile: () => void;
 }
 
 function defaultName(index: number): string {
@@ -73,7 +74,7 @@ function PlayerRowField({
   );
 }
 
-function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
+function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
   const { user, profile } = useAuth();
   const nextRowId = useRef(0);
   const createRowId = () => `player-row-${nextRowId.current++}`;
@@ -150,7 +151,12 @@ function StartScreen({ onStart, onOpenAuth }: StartScreenProps) {
         src="/dice/logos/logo-bd2-2-header.png"
         alt="Bronx Dice"
       />
-      <button type="button" onClick={onOpenAuth}>
+      {user && (
+        <button type="button" onClick={onOpenAuth}>
+          Zagraj online
+        </button>
+      )}
+      <button type="button" onClick={user ? onOpenProfile : onOpenAuth}>
         {user ? 'Profil gracza' : 'Zaloguj się'}
       </button>
       <label htmlFor="player-count">Liczba graczy</label>

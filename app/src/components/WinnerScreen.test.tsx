@@ -18,16 +18,18 @@ function scoreCardWithTotal(total: number): PlayerScoreCard {
 describe('WinnerScreen', () => {
   it('announces the single winner and their total', () => {
     const winners: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const players: Player[] = [{ id: 'player-1', name: 'Ola' }];
     const scoreCards = { 'player-1': scoreCardWithTotal(120) };
     render(
       <WinnerScreen
         winners={winners}
+        players={players}
         scoreCards={scoreCards}
         onPlayAgain={() => {}}
       />
     );
     expect(screen.getByText('Zwycięzca: Ola!')).toBeInTheDocument();
-    expect(screen.getByText('Wynik: 120')).toBeInTheDocument();
+    expect(screen.getByText('120')).toBeInTheDocument();
   });
 
   it('announces a tie between multiple winners', () => {
@@ -35,6 +37,7 @@ describe('WinnerScreen', () => {
       { id: 'player-1', name: 'Ola' },
       { id: 'player-2', name: 'Kuba' },
     ];
+    const players = winners;
     const scoreCards = {
       'player-1': scoreCardWithTotal(100),
       'player-2': scoreCardWithTotal(100),
@@ -42,6 +45,7 @@ describe('WinnerScreen', () => {
     render(
       <WinnerScreen
         winners={winners}
+        players={players}
         scoreCards={scoreCards}
         onPlayAgain={() => {}}
       />
@@ -49,14 +53,41 @@ describe('WinnerScreen', () => {
     expect(screen.getByText('Remis: Ola i Kuba!')).toBeInTheDocument();
   });
 
+  it('lists all players ordered from highest to lowest score', () => {
+    const winners: Player[] = [{ id: 'player-2', name: 'Kuba' }];
+    const players: Player[] = [
+      { id: 'player-1', name: 'Ola' },
+      { id: 'player-2', name: 'Kuba' },
+      { id: 'player-3', name: 'Ala' },
+    ];
+    const scoreCards = {
+      'player-1': scoreCardWithTotal(50),
+      'player-2': scoreCardWithTotal(150),
+      'player-3': scoreCardWithTotal(90),
+    };
+    render(
+      <WinnerScreen
+        winners={winners}
+        players={players}
+        scoreCards={scoreCards}
+        onPlayAgain={() => {}}
+      />
+    );
+
+    const names = screen.getAllByRole('listitem').map((item) => item.textContent);
+    expect(names).toEqual(['Kuba150', 'Ala90', 'Ola50']);
+  });
+
   it('calls onPlayAgain when the button is clicked', async () => {
     const user = userEvent.setup();
     const onPlayAgain = vi.fn();
     const winners: Player[] = [{ id: 'player-1', name: 'Ola' }];
+    const players: Player[] = [{ id: 'player-1', name: 'Ola' }];
     const scoreCards = { 'player-1': scoreCardWithTotal(50) };
     render(
       <WinnerScreen
         winners={winners}
+        players={players}
         scoreCards={scoreCards}
         onPlayAgain={onPlayAgain}
       />

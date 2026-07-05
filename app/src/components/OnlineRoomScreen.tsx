@@ -33,11 +33,16 @@ function OnlineRoomScreen({ roomId, ownUid, onLeft }: OnlineRoomScreenProps) {
   }
 
   if (room.phase === 'playing') {
-    return <OnlineGameScreen room={room} roomId={roomId} ownUid={ownUid} />;
+    return <OnlineGameScreen room={room} roomId={roomId} ownUid={ownUid} onExit={onLeft} />;
   }
 
   return (
-    <WinnerScreen winners={getWinners(room)} scoreCards={room.scoreCards} onPlayAgain={onLeft} />
+    <WinnerScreen
+      winners={getWinners(room)}
+      players={room.players}
+      scoreCards={room.scoreCards}
+      onPlayAgain={onLeft}
+    />
   );
 }
 

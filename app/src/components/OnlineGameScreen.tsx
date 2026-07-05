@@ -17,9 +17,10 @@ interface OnlineGameScreenProps {
   room: Extract<RoomDocument, { phase: 'playing' }>;
   roomId: string;
   ownUid: string;
+  onExit: () => void;
 }
 
-function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
+function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProps) {
   const currentPlayer = room.players[room.currentPlayerIndex] as RoomPlayer;
   const isOwnTurn = currentPlayer.id === ownUid;
   const remainingSeconds = useCountdown(room.turnStartedAt, room.turnTimeLimitSeconds);
@@ -65,8 +66,17 @@ function OnlineGameScreen({ room, roomId, ownUid }: OnlineGameScreenProps) {
     });
   }, [remainingSeconds, room.currentPlayerIndex, roomId]);
 
+  const handleExit = () => {
+    if (window.confirm('Czy na pewno chcesz opuścić grę? Twoje tury będą pomijane po czasie.')) {
+      onExit();
+    }
+  };
+
   return (
     <div className="online-game-screen">
+      <button type="button" className="back-button" onClick={handleExit}>
+        Wyjdź z gry
+      </button>
       <h2>
         Tura: {currentPlayer.name}
         <img className="online-turn-avatar" src={avatarSrc(currentPlayer.avatarId)} alt="" />

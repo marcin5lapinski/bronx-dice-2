@@ -47,6 +47,7 @@ function App() {
       <GameScreen
         playerNames={screen.playerNames}
         onPlayAgain={() => setScreen({ kind: 'local-start' })}
+        onExit={() => setScreen({ kind: 'local-start' })}
       />
     );
   }
@@ -120,6 +121,7 @@ function App() {
       <OnlineMenuScreen
         onRoomJoined={enterRoom}
         onOpenProfile={() => setScreen({ kind: 'profile' })}
+        onBack={() => setScreen({ kind: 'local-start' })}
       />
     );
   }
@@ -128,6 +130,7 @@ function App() {
     <StartScreen
       onStart={(playerNames) => setScreen({ kind: 'local-game', playerNames })}
       onOpenAuth={() => setScreen({ kind: 'auth-gate', authScreen: 'login' })}
+      onOpenProfile={() => setScreen({ kind: 'profile' })}
     />
   );
 }

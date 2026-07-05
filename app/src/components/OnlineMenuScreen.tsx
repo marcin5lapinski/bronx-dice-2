@@ -7,13 +7,14 @@ const TURN_TIME_LIMIT_OPTIONS = [15, 30, 45, 60] as const;
 interface OnlineMenuScreenProps {
   onRoomJoined: (roomId: string) => void;
   onOpenProfile: () => void;
+  onBack: () => void;
 }
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Coś poszło nie tak. Spróbuj ponownie.';
 }
 
-function OnlineMenuScreen({ onRoomJoined, onOpenProfile }: OnlineMenuScreenProps) {
+function OnlineMenuScreen({ onRoomJoined, onOpenProfile, onBack }: OnlineMenuScreenProps) {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [turnTimeLimitSeconds, setTurnTimeLimitSeconds] = useState<number>(30);
   const [roomCode, setRoomCode] = useState('');
@@ -53,6 +54,9 @@ function OnlineMenuScreen({ onRoomJoined, onOpenProfile }: OnlineMenuScreenProps
 
   return (
     <div className="online-menu-screen">
+      <button type="button" className="back-button" onClick={onBack}>
+        Wstecz
+      </button>
       <h1>Gra online</h1>
       {error && <p className="auth-error">{error}</p>}
 
