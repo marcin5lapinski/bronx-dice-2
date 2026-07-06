@@ -16,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { MIN_PLAYERS } from '@bronx-dice/game-engine';
 import { avatarSrc } from './avatarOptions';
+import InlineSpinner from './InlineSpinner';
 import { setReady, startGame, leaveRoom } from '../services/roomService';
 import { reorderIds, shufflePlayerOrder } from '../utils/playerOrder';
 import type { RoomDocument, RoomPlayer } from '../types/room';
@@ -84,6 +85,7 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
   const [error, setError] = useState<string | null>(null);
   const [orderedIds, setOrderedIds] = useState<string[]>(() => room.players.map((p) => p.id));
   const [randomizeOrder, setRandomizeOrder] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const ownPlayer = room.players.find((player) => player.id === ownUid);
   const isHost = room.hostId === ownUid;
@@ -129,14 +131,16 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
     }
   };
 
-  const handleStart = async () => {
-    setError(null);
-    try {
-      const finalOrder = randomizeOrder ? shufflePlayerOrder(orderedIds) : orderedIds;
-      await startGame(roomId, finalOrder);
-    } catch (err) {
-      setError(errorMessage(err));
+  const handleStart = () => {
+    if (starting) {
+      return;
     }
+    setError(null);
+    setStarting(true);
+    const finalOrder = randomizeOrder ? shufflePlayerOrder(orderedIds) : orderedIds;
+    startGame(roomId, finalOrder)
+      .catch((err: unknown) => setError(errorMessage(err)))
+      .finally(() => setStarting(false));
   };
 
   const handleLeave = async () => {
@@ -200,8 +204,15 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
         </button>
       )}
       {isHost && (
-        <button type="button" disabled={!canStart} onClick={handleStart}>
-          Rozpocznij grę
+        <button type="button" disabled={!canStart || starting} onClick={handleStart}>
+          {starting ? (
+            <>
+              Startuję…
+              <InlineSpinner />
+            </>
+          ) : (
+            'Rozpocznij grę'
+          )}
         </button>
       )}
       <button type="button" onClick={handleLeave}>

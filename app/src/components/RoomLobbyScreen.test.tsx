@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RoomLobbyScreen from './RoomLobbyScreen';
 import { setReady, startGame, leaveRoom } from '../services/roomService';
@@ -33,6 +33,10 @@ function lobbyRoom(overrides: Partial<LobbyRoom> = {}): LobbyRoom {
 describe('RoomLobbyScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // `startGame` is a plain `vi.fn()` from the `vi.mock` factory (not
+    // `vi.spyOn`), so `restoreAllMocks` alone doesn't clear its call history
+    // or any custom `mockImplementation` between tests — reset explicitly.
+    vi.mocked(startGame).mockReset();
   });
 
   it('lists every player with their name and marks the host', () => {
@@ -83,6 +87,32 @@ describe('RoomLobbyScreen', () => {
     render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
     expect(startGame).toHaveBeenCalledWith('AAAAA', ['uid-1', 'uid-2']);
+  });
+
+  it('does not call startGame a second time when clicked again before the first call resolves', () => {
+    let resolveStart!: () => void;
+    vi.mocked(startGame).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveStart = () => resolve(undefined);
+        })
+    );
+    const room = lobbyRoom({
+      players: [
+        { id: 'uid-1', name: 'Ola', avatarId: 'avatar01', ready: true, lastActiveAt: {} as never },
+        { id: 'uid-2', name: 'Kuba', avatarId: 'avatar02', ready: true, lastActiveAt: {} as never },
+      ],
+    });
+    render(<RoomLobbyScreen room={room} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    const button = screen.getByRole('button', { name: 'Rozpocznij grę' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(startGame).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Startuję…')).toBeInTheDocument();
+
+    resolveStart();
   });
 
   it('renders a drag handle for each player row for the host', () => {
