@@ -742,3 +742,16 @@
   font-size: 13px;
   color: var(--text-dim);
 }
+
+/* ConnectionBanner */
+.connection-banner {
+  color: var(--accent-warn);
+  border: 1px solid var(--accent-warn);
+  box-shadow: 0 0 8px var(--accent-warn-glow);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

@@ -10,6 +10,8 @@
   --accent-green: #39ff14;
   --accent-green-glow: rgba(57, 255, 20, 0.6);
   --accent-green-bg: rgba(57, 255, 20, 0.06);
+  --accent-warn: #ffb300;
+  --accent-warn-glow: rgba(255, 179, 0, 0.6);
   --font-mono: ui-monospace, Consolas, monospace;
   --die-size: 48px;
 }
