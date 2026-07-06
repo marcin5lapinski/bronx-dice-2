@@ -78,6 +78,8 @@ describe('OnlineGameScreen', () => {
     vi.mocked(playSound).mockClear();
     vi.mocked(setSoundMuted).mockClear();
     vi.mocked(isSoundMuted).mockReturnValue(false);
+    vi.mocked(rollDice).mockClear();
+    vi.mocked(rollDice).mockResolvedValue(undefined);
   });
 
   it("shows the current player's name and calls rollDice on their own turn", async () => {
@@ -89,6 +91,27 @@ describe('OnlineGameScreen', () => {
     expect(screen.getByText(/Tura: Ola/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
     expect(rollDice).toHaveBeenCalledWith('AAAAA');
+  });
+
+  it('does not call rollDice a second time when clicked again before the first call resolves', () => {
+    let resolveRoll!: () => void;
+    vi.mocked(rollDice).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRoll = () => resolve(undefined);
+        })
+    );
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const button = screen.getByRole('button', { name: 'Rzuć kośćmi' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(rollDice).toHaveBeenCalledTimes(1);
+
+    resolveRoll();
   });
 
   it("disables the roll button when it is not the viewer's turn", () => {
