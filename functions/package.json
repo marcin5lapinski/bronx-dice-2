@@ -11,7 +11,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@bronx-dice/game-engine": "*",
+    "@bronx-dice/game-engine": "file:./bronx-dice-game-engine-0.0.0.tgz",
     "firebase-admin": "^13.0.0",
     "firebase-functions": "^6.0.0"
   },

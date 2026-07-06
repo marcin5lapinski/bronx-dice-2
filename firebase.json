@@ -4,7 +4,12 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "predeploy": [
+      "npm run build:engine",
+      "npm pack ./packages/game-engine --pack-destination functions",
+      "npm --prefix functions run build"
+    ]
   },
   "hosting": {
     "public": "app/dist",
