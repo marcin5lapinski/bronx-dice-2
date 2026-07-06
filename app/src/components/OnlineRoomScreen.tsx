@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { getWinners } from '@bronx-dice/game-engine';
 import RoomLobbyScreen from './RoomLobbyScreen';
 import OnlineGameScreen from './OnlineGameScreen';
 import WinnerScreen from './WinnerScreen';
+import ConnectionBanner from './ConnectionBanner';
 import { useRoom } from '../hooks/useRoom';
 import { usePresenceHeartbeat } from '../hooks/usePresenceHeartbeat';
 import { returnToLobby } from '../services/roomService';
@@ -15,7 +16,7 @@ interface OnlineRoomScreenProps {
 }
 
 function OnlineRoomScreen({ roomId, ownUid, onLeft }: OnlineRoomScreenProps) {
-  const { room, loading, notFound } = useRoom(roomId);
+  const { room, loading, notFound, disconnected } = useRoom(roomId);
   usePresenceHeartbeat(roomId);
   const previousPhaseRef = useRef<string | null>(null);
 
@@ -40,27 +41,31 @@ function OnlineRoomScreen({ roomId, ownUid, onLeft }: OnlineRoomScreenProps) {
     return null;
   }
 
+  let content: ReactNode;
   if (loading || !room) {
-    return <p>Ładowanie…</p>;
+    content = <p>Ładowanie…</p>;
+  } else if (room.phase === 'lobby') {
+    content = <RoomLobbyScreen room={room} roomId={roomId} ownUid={ownUid} onLeft={onLeft} />;
+  } else if (room.phase === 'playing') {
+    content = <OnlineGameScreen room={room} roomId={roomId} ownUid={ownUid} onExit={onLeft} />;
+  } else {
+    const isHost = room.hostId === ownUid;
+    content = (
+      <WinnerScreen
+        winners={getWinners(room)}
+        players={room.players}
+        scoreCards={room.scoreCards}
+        onPlayAgain={isHost ? () => { void returnToLobby(roomId); } : undefined}
+        onExit={onLeft}
+      />
+    );
   }
 
-  if (room.phase === 'lobby') {
-    return <RoomLobbyScreen room={room} roomId={roomId} ownUid={ownUid} onLeft={onLeft} />;
-  }
-
-  if (room.phase === 'playing') {
-    return <OnlineGameScreen room={room} roomId={roomId} ownUid={ownUid} onExit={onLeft} />;
-  }
-
-  const isHost = room.hostId === ownUid;
   return (
-    <WinnerScreen
-      winners={getWinners(room)}
-      players={room.players}
-      scoreCards={room.scoreCards}
-      onPlayAgain={isHost ? () => { void returnToLobby(roomId); } : undefined}
-      onExit={onLeft}
-    />
+    <>
+      <ConnectionBanner visible={disconnected} />
+      {content}
+    </>
   );
 }
 

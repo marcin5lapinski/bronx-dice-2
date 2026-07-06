@@ -114,7 +114,12 @@ describe('OnlineRoomScreen', () => {
   });
 
   it('shows a loading message while the room is loading', () => {
-    vi.mocked(useRoom).mockReturnValue({ room: null, loading: true, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: null,
+      loading: true,
+      notFound: false,
+      disconnected: false,
+    });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
     expect(screen.getByText('Ładowanie…')).toBeInTheDocument();
   });
@@ -134,6 +139,7 @@ describe('OnlineRoomScreen', () => {
       },
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
     expect(screen.getByText('Pokój AAAAA')).toBeInTheDocument();
@@ -144,6 +150,7 @@ describe('OnlineRoomScreen', () => {
       room: finishedRoom(),
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
     expect(screen.getByText('Zwycięzca: Ola!')).toBeInTheDocument();
@@ -155,6 +162,7 @@ describe('OnlineRoomScreen', () => {
       room: finishedRoom(),
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
 
@@ -167,6 +175,7 @@ describe('OnlineRoomScreen', () => {
       room: finishedRoom(),
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-2" onLeft={() => {}} />);
 
@@ -183,6 +192,7 @@ describe('OnlineRoomScreen', () => {
       room: finishedRoom(),
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={onLeft} />);
 
@@ -191,19 +201,34 @@ describe('OnlineRoomScreen', () => {
   });
 
   it('calls onLeft when the room is not found', async () => {
-    vi.mocked(useRoom).mockReturnValue({ room: null, loading: false, notFound: true });
+    vi.mocked(useRoom).mockReturnValue({
+      room: null,
+      loading: false,
+      notFound: true,
+      disconnected: false,
+    });
     const onLeft = vi.fn();
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={onLeft} />);
     await waitFor(() => expect(onLeft).toHaveBeenCalled());
   });
 
   it('plays the start-game sound when the room transitions from lobby to playing', () => {
-    vi.mocked(useRoom).mockReturnValue({ room: lobbyRoom(), loading: false, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: lobbyRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
     const { rerender } = render(
       <OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />
     );
 
-    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: playingRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
     rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
 
     expect(playSound).toHaveBeenCalledWith('start-game');
@@ -211,19 +236,34 @@ describe('OnlineRoomScreen', () => {
   });
 
   it('does not play the start-game sound when mounting directly into an already-playing room', () => {
-    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: playingRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
     render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
 
     expect(playSound).not.toHaveBeenCalled();
   });
 
   it('does not replay the start-game sound on later playing-phase updates', () => {
-    vi.mocked(useRoom).mockReturnValue({ room: lobbyRoom(), loading: false, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: lobbyRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
     const { rerender } = render(
       <OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />
     );
 
-    vi.mocked(useRoom).mockReturnValue({ room: playingRoom(), loading: false, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: playingRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
     rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
 
     // A later snapshot update while still 'playing' (e.g. a roll) must not
@@ -232,9 +272,36 @@ describe('OnlineRoomScreen', () => {
       room: { ...playingRoom(), dice: [1, 2, 3, 4, 5] },
       loading: false,
       notFound: false,
+      disconnected: false,
     });
     rerender(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
 
     expect(playSound).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the connection banner when disconnected, regardless of room phase', () => {
+    vi.mocked(useRoom).mockReturnValue({
+      room: lobbyRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: true,
+    });
+    render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+    expect(
+      screen.getByText('Utracono połączenie — próbuję ponownie…')
+    ).toBeInTheDocument();
+  });
+
+  it('does not show the connection banner when connected', () => {
+    vi.mocked(useRoom).mockReturnValue({
+      room: lobbyRoom(),
+      loading: false,
+      notFound: false,
+      disconnected: false,
+    });
+    render(<OnlineRoomScreen roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+    expect(
+      screen.queryByText('Utracono połączenie — próbuję ponownie…')
+    ).not.toBeInTheDocument();
   });
 });
