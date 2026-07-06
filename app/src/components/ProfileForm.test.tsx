@@ -23,6 +23,20 @@ describe('ProfileForm', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('limits the display name input to 10 characters', () => {
+    render(
+      <ProfileForm
+        initialDisplayName="Ola"
+        initialAvatarId={AVATAR_OPTIONS[0].id}
+        submitLabel="Zapisz"
+        submitting={false}
+        error={null}
+        onSubmit={() => {}}
+      />
+    );
+    expect(screen.getByLabelText('Nazwa wyświetlana')).toHaveAttribute('maxLength', '10');
+  });
+
   it('selecting a different avatar updates aria-pressed', async () => {
     const user = userEvent.setup();
     render(

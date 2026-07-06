@@ -37,6 +37,7 @@ function ProfileForm({
         type="text"
         value={displayName}
         onChange={(event) => setDisplayName(event.target.value)}
+        maxLength={10}
         required
       />
       <fieldset>

@@ -46,8 +46,14 @@
 /* ScoreBoard */
 .score-board {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 12px;
+}
+
+.score-board th:first-child,
+.score-board td:first-child {
+  width: 11ch;
 }
 
 .score-board th,
@@ -71,6 +77,12 @@
 .score-board th:not(:first-child),
 .score-board td:not(:first-child) {
   text-align: center;
+}
+
+.score-board thead th:not(:first-child) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .score-board .current-player-col {
@@ -109,10 +121,10 @@
 }
 
 @media (max-width: 480px) {
-  .score-board {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+  .score-board-wrapper {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
   }
 }
 
@@ -333,6 +345,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+}
+
+.online-game-top-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

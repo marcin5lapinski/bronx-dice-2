@@ -155,22 +155,14 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
 
   return (
     <div className="online-game-screen">
-      <button type="button" className="back-button" onClick={handleExit}>
-        Wyjdź z gry
-      </button>
-      <button type="button" className="back-button" onClick={handleToggleSound}>
-        {soundMuted ? 'Włącz dźwięki' : 'Wyłącz dźwięki'}
-      </button>
-      {isHost && (
-        <div className="host-presence-controls">
-          <button type="button" disabled={!canRemoveInactive} onClick={handleRemoveInactive}>
-            Usuń nieaktywnych graczy
-          </button>
-          <button type="button" disabled={!canAbort} onClick={handleAbort}>
-            Przerwij grę i wróć do pokoju
-          </button>
-        </div>
-      )}
+      <div className="online-game-top-actions">
+        <button type="button" className="back-button" onClick={handleExit}>
+          Wyjdź z gry
+        </button>
+        <button type="button" className="back-button" onClick={handleToggleSound}>
+          {soundMuted ? 'Włącz dźwięki' : 'Wyłącz dźwięki'}
+        </button>
+      </div>
       {presenceError && <p className="auth-error">{presenceError}</p>}
       <h2>
         Tura: {currentPlayer.name}
@@ -201,6 +193,16 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
           void scoreCategory(roomId, category);
         }}
       />
+      {isHost && (
+        <div className="host-presence-controls">
+          <button type="button" disabled={!canRemoveInactive} onClick={handleRemoveInactive}>
+            Usuń nieaktywnych graczy
+          </button>
+          <button type="button" disabled={!canAbort} onClick={handleAbort}>
+            Przerwij grę i wróć do pokoju
+          </button>
+        </div>
+      )}
     </div>
   );
 }

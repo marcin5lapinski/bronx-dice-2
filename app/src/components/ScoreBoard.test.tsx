@@ -28,6 +28,40 @@ describe('ScoreBoard', () => {
     ).toBeInTheDocument();
   });
 
+  it('truncates player names longer than 10 characters, keeping the full name in the title', () => {
+    const state = createGameState(['Bardzo Dlugie Imie', 'Kuba']);
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={[]}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    const header = screen.getByRole('columnheader', { name: 'Bardzo Dlu…' });
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute('title', 'Bardzo Dlugie Imie');
+  });
+
+  it('does not truncate a player name of exactly 10 characters', () => {
+    const state = createGameState(['Dziesiecin', 'Kuba']);
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={[]}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole('columnheader', { name: 'Dziesiecin' })
+    ).toBeInTheDocument();
+  });
+
   it('shows a filled score as plain text, not a button', () => {
     const state = createGameState(['Ola', 'Kuba']);
     state.scoreCards[state.players[0].id].upper.aces = 3;

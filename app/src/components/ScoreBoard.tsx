@@ -22,6 +22,14 @@ interface ScoreBoardProps {
   onScore: (category: ScoreCategory) => void;
 }
 
+const MAX_DISPLAY_NAME_LENGTH = 10;
+
+function truncateName(name: string): string {
+  return name.length > MAX_DISPLAY_NAME_LENGTH
+    ? `${name.slice(0, MAX_DISPLAY_NAME_LENGTH)}…`
+    : name;
+}
+
 const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   aces: 'Jedynki',
   twos: 'Dwójki',
@@ -110,53 +118,56 @@ function ScoreBoard({
   );
 
   return (
-    <table className="score-board">
-      <thead>
-        <tr>
-          <th>Kategoria</th>
-          {players.map((player) => (
-            <th
-              key={player.id}
-              className={playerColClass(player.id, currentPlayerId)}
-            >
-              {player.name}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {UPPER_CATEGORIES.map(renderCategoryRow)}
-        <tr className="bonus-row">
-          <td>Bonus</td>
-          {players.map((player) => {
-            const bonus = calculateBonus(scoreCards[player.id]);
-            const classes = [
-              playerColClass(player.id, currentPlayerId),
-              bonus > 0 ? 'bonus-earned' : null,
-            ]
-              .filter(Boolean)
-              .join(' ');
-            return (
-              <td key={player.id} className={classes || undefined}>
-                {bonus > 0 ? bonus : ''}
+    <div className="score-board-wrapper">
+      <table className="score-board">
+        <thead>
+          <tr>
+            <th>Kategoria</th>
+            {players.map((player) => (
+              <th
+                key={player.id}
+                className={playerColClass(player.id, currentPlayerId)}
+                title={player.name}
+              >
+                {truncateName(player.name)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {UPPER_CATEGORIES.map(renderCategoryRow)}
+          <tr className="bonus-row">
+            <td>Bonus</td>
+            {players.map((player) => {
+              const bonus = calculateBonus(scoreCards[player.id]);
+              const classes = [
+                playerColClass(player.id, currentPlayerId),
+                bonus > 0 ? 'bonus-earned' : null,
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <td key={player.id} className={classes || undefined}>
+                  {bonus > 0 ? bonus : ''}
+                </td>
+              );
+            })}
+          </tr>
+          {LOWER_CATEGORIES.map(renderCategoryRow)}
+          <tr className="total-row">
+            <td>Suma</td>
+            {players.map((player) => (
+              <td
+                key={player.id}
+                className={playerColClass(player.id, currentPlayerId)}
+              >
+                {calculateTotal(scoreCards[player.id])}
               </td>
-            );
-          })}
-        </tr>
-        {LOWER_CATEGORIES.map(renderCategoryRow)}
-        <tr className="total-row">
-          <td>Suma</td>
-          {players.map((player) => (
-            <td
-              key={player.id}
-              className={playerColClass(player.id, currentPlayerId)}
-            >
-              {calculateTotal(scoreCards[player.id])}
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
