@@ -152,6 +152,65 @@ describe('ScoreBoard', () => {
     expect(onScore).toHaveBeenCalledWith('threes');
   });
 
+  it('shows the pending category as a disabled pending-glow button, still showing its preview value', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const dice: DiceValue[] = [3, 3, 1, 2, 5];
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={dice}
+        rollsLeft={3}
+        pendingCategory="threes"
+        onScore={() => {}}
+      />
+    );
+    const row = screen.getByText('Trójki').closest('tr')!;
+    const button = row.querySelector('button')!;
+    expect(button).not.toBeNull();
+    expect(button).toBeDisabled();
+    expect(button).toHaveClass('pending-glow');
+    expect(button.textContent).toBe('6');
+  });
+
+  it('disables other otherwise-clickable categories while one category is pending', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const dice: DiceValue[] = [3, 3, 1, 2, 5];
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={dice}
+        rollsLeft={3}
+        pendingCategory="threes"
+        onScore={() => {}}
+      />
+    );
+    const acesRow = screen.getByText('Jedynki').closest('tr')!;
+    expect(acesRow.querySelector('button')).toBeNull();
+  });
+
+  it('has no pending styling when pendingCategory is not provided', () => {
+    const state = createGameState(['Ola', 'Kuba']);
+    const dice: DiceValue[] = [3, 3, 1, 2, 5];
+    render(
+      <ScoreBoard
+        players={state.players}
+        scoreCards={state.scoreCards}
+        currentPlayerId={state.players[0].id}
+        dice={dice}
+        rollsLeft={3}
+        onScore={() => {}}
+      />
+    );
+    const row = screen.getByText('Trójki').closest('tr')!;
+    const button = row.querySelector('button')!;
+    expect(button).not.toBeDisabled();
+    expect(button).not.toHaveClass('pending-glow');
+  });
+
   it('keeps lower-section categories blank until the upper section is filled', () => {
     const state = createGameState(['Ola', 'Kuba']);
     const dice: DiceValue[] = [1, 2, 3, 4, 5];

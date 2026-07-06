@@ -19,6 +19,7 @@ interface ScoreBoardProps {
   dice: DiceValue[];
   rollsLeft: number;
   interactive?: boolean;
+  pendingCategory?: ScoreCategory | null;
   onScore: (category: ScoreCategory) => void;
 }
 
@@ -81,6 +82,7 @@ function ScoreBoard({
   dice,
   rollsLeft,
   interactive = true,
+  pendingCategory = null,
   onScore,
 }: ScoreBoardProps) {
   const hasRolled = dice.length === 5;
@@ -92,11 +94,13 @@ function ScoreBoard({
         const scoreCard = scoreCards[player.id];
         const value = scoreValue(scoreCard, category);
         const isCurrentPlayer = player.id === currentPlayerId;
-        const clickable =
+        const wouldBeClickable =
           isCurrentPlayer &&
           interactive &&
           hasRolled &&
           canScoreCategory(scoreCard, category);
+        const isPending = wouldBeClickable && category === pendingCategory;
+        const clickable = wouldBeClickable && pendingCategory === null;
         return (
           <td
             key={player.id}
@@ -104,6 +108,10 @@ function ScoreBoard({
           >
             {value !== null ? (
               value
+            ) : isPending ? (
+              <button type="button" className="pending-glow" disabled>
+                {previewScore(scoreCard, category, dice, rollsLeft)}
+              </button>
             ) : clickable ? (
               <button type="button" onClick={() => onScore(category)}>
                 {previewScore(scoreCard, category, dice, rollsLeft)}
