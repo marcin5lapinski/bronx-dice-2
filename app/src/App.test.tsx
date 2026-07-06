@@ -59,7 +59,12 @@ describe('App', () => {
       return () => {};
     });
     vi.mocked(getProfile).mockResolvedValue(null);
-    vi.mocked(useRoom).mockReturnValue({ room: null, loading: true, notFound: false });
+    vi.mocked(useRoom).mockReturnValue({
+      room: null,
+      loading: true,
+      notFound: false,
+      disconnected: false,
+    });
   });
 
   afterEach(() => {
