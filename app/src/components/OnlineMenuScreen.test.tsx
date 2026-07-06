@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import OnlineMenuScreen from './OnlineMenuScreen';
 import { createRoom, joinRoom } from '../services/roomService';
@@ -15,8 +15,11 @@ describe('OnlineMenuScreen', () => {
     vi.restoreAllMocks();
     // `createRoom`/`joinRoom` are plain `vi.fn()`s from the `vi.mock` factory
     // (not `vi.spyOn`), so `restoreAllMocks` alone doesn't clear their call
-    // history between tests — do that explicitly to keep tests isolated.
+    // history or any custom `mockImplementation` between tests — reset both
+    // explicitly to keep tests isolated.
     vi.clearAllMocks();
+    vi.mocked(createRoom).mockReset();
+    vi.mocked(joinRoom).mockReset();
   });
 
   it('creates a room with the selected settings and reports the new roomId', async () => {
@@ -92,5 +95,49 @@ describe('OnlineMenuScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Wstecz' }));
 
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it('shows a pending label on Create and disables both buttons while creating a room', () => {
+    let resolveCreate!: (roomId: string) => void;
+    vi.mocked(createRoom).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        })
+    );
+    render(
+      <OnlineMenuScreen onRoomJoined={() => {}} onOpenProfile={() => {}} onBack={() => {}} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stwórz pokój' }));
+
+    expect(screen.getByText('Tworzę pokój…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Tworzę pokój/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Dołącz' })).toBeDisabled();
+
+    resolveCreate('AAAAA');
+  });
+
+  it('shows a pending label on Join and disables both buttons while joining a room', async () => {
+    const user = userEvent.setup();
+    let resolveJoin!: () => void;
+    vi.mocked(joinRoom).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveJoin = () => resolve(undefined);
+        })
+    );
+    render(
+      <OnlineMenuScreen onRoomJoined={() => {}} onOpenProfile={() => {}} onBack={() => {}} />
+    );
+
+    await user.type(screen.getByLabelText('Kod pokoju'), 'ABCDE');
+    fireEvent.click(screen.getByRole('button', { name: 'Dołącz' }));
+
+    expect(screen.getByText('Dołączam…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dołączam/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stwórz pokój' })).toBeDisabled();
+
+    resolveJoin();
   });
 });
