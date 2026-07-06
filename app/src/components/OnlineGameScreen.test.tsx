@@ -114,6 +114,26 @@ describe('OnlineGameScreen', () => {
     resolveRoll();
   });
 
+  it('shows the pending-glow indicator on the roll button while a roll is in flight', () => {
+    let resolveRoll!: () => void;
+    vi.mocked(rollDice).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRoll = () => resolve(undefined);
+        })
+    );
+    render(
+      <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const button = screen.getByRole('button', { name: 'Rzuć kośćmi' });
+    fireEvent.click(button);
+
+    expect(button).toHaveClass('pending-glow');
+
+    resolveRoll();
+  });
+
   it("disables the roll button when it is not the viewer's turn", () => {
     render(
       <OnlineGameScreen room={playingRoom()} roomId="AAAAA" ownUid="uid-2" onExit={() => {}} />

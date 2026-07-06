@@ -179,6 +179,7 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
       <RollButton
         rollsLeft={room.rollsLeft}
         interactive={isOwnTurn && !rollPending}
+        pending={rollPending}
         onRoll={() => {
           if (rollPending) {
             return;
