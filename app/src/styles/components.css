@@ -780,3 +780,32 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* Pending-state indicator for frequent in-game actions (roll, score) */
+.pending-glow {
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+button.pending-glow:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+.roll-button button.pending-glow:disabled,
+.score-board tbody button.pending-glow {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+/* InlineSpinner — used inside one-shot lobby/menu action buttons */
+.inline-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}

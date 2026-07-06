@@ -81,3 +81,19 @@ button:disabled {
     transform: rotate(-1080deg);
   }
 }
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--accent-blue-glow);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--accent-blue-glow);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
