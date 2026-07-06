@@ -7,6 +7,7 @@ import OnlineGameScreen from './OnlineGameScreen';
 import {
   rollDice,
   toggleHeldDie,
+  scoreCategory,
   handleTurnTimeout,
   removeInactivePlayers,
   returnToLobby,
@@ -80,6 +81,8 @@ describe('OnlineGameScreen', () => {
     vi.mocked(isSoundMuted).mockReturnValue(false);
     vi.mocked(rollDice).mockClear();
     vi.mocked(rollDice).mockResolvedValue(undefined);
+    vi.mocked(scoreCategory).mockClear();
+    vi.mocked(scoreCategory).mockResolvedValue(undefined);
   });
 
   it("shows the current player's name and calls rollDice on their own turn", async () => {
@@ -132,6 +135,61 @@ describe('OnlineGameScreen', () => {
     expect(button).toHaveClass('pending-glow');
 
     resolveRoll();
+  });
+
+  it('does not call scoreCategory a second time for another category while one is pending', () => {
+    vi.useFakeTimers();
+    let resolveScore!: () => void;
+    vi.mocked(scoreCategory).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveScore = () => resolve(undefined);
+        })
+    );
+    const room = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container } = render(
+      <OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    const buttons = Array.from(container.querySelectorAll('table button'));
+    const button = buttons[0] as HTMLButtonElement;
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(scoreCategory).toHaveBeenCalledTimes(1);
+
+    resolveScore();
+  });
+
+  it('shows the pending-glow indicator on the score cell being submitted', () => {
+    vi.useFakeTimers();
+    let resolveScore!: () => void;
+    vi.mocked(scoreCategory).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveScore = () => resolve(undefined);
+        })
+    );
+    const room = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container } = render(
+      <OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    const buttons = Array.from(container.querySelectorAll('table button'));
+    const button = buttons[0] as HTMLButtonElement;
+    fireEvent.click(button);
+
+    expect(button).toHaveClass('pending-glow');
+
+    resolveScore();
   });
 
   it("disables the roll button when it is not the viewer's turn", () => {

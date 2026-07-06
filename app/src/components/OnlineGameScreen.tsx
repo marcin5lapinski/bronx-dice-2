@@ -39,6 +39,9 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const [presenceError, setPresenceError] = useState<string | null>(null);
   const [soundMuted, setSoundMutedState] = useState(() => isSoundMuted());
   const [rollPending, setRollPending] = useState(false);
+  const [pendingScoreCategory, setPendingScoreCategory] = useState<ScoreCategory | null>(
+    null
+  );
 
   // toggleHeldDie is a Cloud Function call: the click only becomes visible
   // once the round trip (call -> Firestore write -> our own snapshot
@@ -195,8 +198,13 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
         dice={isRolling ? [] : stableDice}
         rollsLeft={room.rollsLeft}
         interactive={isOwnTurn}
+        pendingCategory={pendingScoreCategory}
         onScore={(category: ScoreCategory) => {
-          void scoreCategory(roomId, category);
+          if (pendingScoreCategory !== null) {
+            return;
+          }
+          setPendingScoreCategory(category);
+          scoreCategory(roomId, category).finally(() => setPendingScoreCategory(null));
         }}
       />
       {isHost && (
