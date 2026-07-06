@@ -7,29 +7,52 @@ interface UseRoomResult {
   room: RoomDocument | null;
   loading: boolean;
   notFound: boolean;
+  disconnected: boolean;
 }
 
 export function useRoom(roomId: string): UseRoomResult {
   const [room, setRoom] = useState<RoomDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
+  const [offline, setOffline] = useState(() => navigator.onLine === false);
 
   useEffect(() => {
     setLoading(true);
     setNotFound(false);
-    const unsubscribe = onSnapshot(doc(db, 'rooms', roomId), (snapshot) => {
-      if (!snapshot.exists()) {
-        setRoom(null);
-        setNotFound(true);
+    setConnectionError(false);
+    const unsubscribe = onSnapshot(
+      doc(db, 'rooms', roomId),
+      (snapshot) => {
+        setConnectionError(false);
+        if (!snapshot.exists()) {
+          setRoom(null);
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+        setRoom(snapshot.data() as RoomDocument);
+        setNotFound(false);
         setLoading(false);
-        return;
+      },
+      () => {
+        setConnectionError(true);
+        setLoading(false);
       }
-      setRoom(snapshot.data() as RoomDocument);
-      setNotFound(false);
-      setLoading(false);
-    });
+    );
     return unsubscribe;
   }, [roomId]);
 
-  return { room, loading, notFound };
+  useEffect(() => {
+    const handleOnline = () => setOffline(false);
+    const handleOffline = () => setOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return { room, loading, notFound, disconnected: connectionError || offline };
 }

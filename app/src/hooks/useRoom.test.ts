@@ -61,4 +61,51 @@ describe('useRoom', () => {
 
     expect(unsubscribe).toHaveBeenCalled();
   });
+
+  it('sets disconnected when the onSnapshot listener reports an error', async () => {
+    mockDoc.mockReturnValue('room-ref');
+    let capturedError: (error: unknown) => void = () => {};
+    mockOnSnapshot.mockImplementation((_ref, _onNext, onError) => {
+      capturedError = onError;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useRoom('AAAAA'));
+    capturedError(new Error('unavailable'));
+
+    await waitFor(() => expect(result.current.disconnected).toBe(true));
+  });
+
+  it('clears disconnected once a later snapshot succeeds', async () => {
+    mockDoc.mockReturnValue('room-ref');
+    let capturedNext: (snapshot: unknown) => void = () => {};
+    let capturedError: (error: unknown) => void = () => {};
+    mockOnSnapshot.mockImplementation((_ref, onNext, onError) => {
+      capturedNext = onNext;
+      capturedError = onError;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useRoom('AAAAA'));
+    capturedError(new Error('unavailable'));
+    await waitFor(() => expect(result.current.disconnected).toBe(true));
+
+    capturedNext({ exists: () => true, data: () => ({ phase: 'lobby' }) });
+    await waitFor(() => expect(result.current.disconnected).toBe(false));
+  });
+
+  it('tracks disconnected via browser online/offline events', async () => {
+    mockDoc.mockReturnValue('room-ref');
+    mockOnSnapshot.mockImplementation(() => () => {});
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(true);
+
+    const { result } = renderHook(() => useRoom('AAAAA'));
+    expect(result.current.disconnected).toBe(false);
+
+    window.dispatchEvent(new Event('offline'));
+    await waitFor(() => expect(result.current.disconnected).toBe(true));
+
+    window.dispatchEvent(new Event('online'));
+    await waitFor(() => expect(result.current.disconnected).toBe(false));
+  });
 });
