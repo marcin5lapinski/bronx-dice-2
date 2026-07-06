@@ -32,4 +32,18 @@ describe('RollButton', () => {
     render(<RollButton rollsLeft={3} onRoll={() => {}} interactive={false} />);
     expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toBeDisabled();
   });
+
+  it('shows the pending-glow indicator when pending is true', () => {
+    render(<RollButton rollsLeft={3} onRoll={() => {}} pending={true} />);
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toHaveClass(
+      'pending-glow'
+    );
+  });
+
+  it('does not show the pending-glow indicator by default', () => {
+    render(<RollButton rollsLeft={3} onRoll={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).not.toHaveClass(
+      'pending-glow'
+    );
+  });
 });
