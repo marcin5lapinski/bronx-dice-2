@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build:engine": "npm run build --workspace=packages/game-engine",
+    "deploy": "npm run build --workspace=app && firebase deploy --only hosting",
     "emulators": "firebase emulators:start",
     "test:functions-integration": "firebase emulators:exec --only firestore \"npm run test:integration --workspace=functions\"",
     "test:rules": "firebase emulators:exec --only firestore \"npm run test:rules --workspace=app\""
