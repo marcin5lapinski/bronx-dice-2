@@ -7,6 +7,15 @@ export const PORT = 4100;
 export function createApp(): Express {
   const app = express();
   app.use(express.json());
+  app.use((_req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+  });
+  app.options('/bot-move', (_req, res) => {
+    res.sendStatus(204);
+  });
 
   app.post('/bot-move', async (req, res) => {
     const { prompt } = req.body as { prompt?: unknown };

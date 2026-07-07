@@ -50,4 +50,25 @@ describe('POST /bot-move', () => {
 
     expect(response.status).toBe(502);
   });
+
+  it('answers a CORS preflight so the browser-based app (a different origin/port) is allowed to call it', async () => {
+    const response = await request(createApp())
+      .options('/bot-move')
+      .set('Origin', 'http://localhost:5179')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'content-type');
+
+    expect(response.headers['access-control-allow-origin']).toBeTruthy();
+  });
+
+  it('includes the CORS header on the actual POST response too', async () => {
+    vi.mocked(runClaudeHeadless).mockResolvedValue('{"category":"chance"}');
+
+    const response = await request(createApp())
+      .post('/bot-move')
+      .set('Origin', 'http://localhost:5179')
+      .send({ prompt: 'decide something' });
+
+    expect(response.headers['access-control-allow-origin']).toBeTruthy();
+  });
 });

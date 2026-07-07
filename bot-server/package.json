@@ -10,9 +10,11 @@
     "lint": "oxlint"
   },
   "dependencies": {
+    "cross-spawn": "^7.0.6",
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
     "@types/express": "^4.17.21",
     "@types/node": "^24.13.2",
     "@types/supertest": "^6.0.2",
