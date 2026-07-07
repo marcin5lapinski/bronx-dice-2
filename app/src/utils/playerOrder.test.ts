@@ -8,9 +8,9 @@ import {
 
 describe('reorderNames', () => {
   const rows: PlayerNameRow[] = [
-    { id: 'a', value: 'Ola' },
-    { id: 'b', value: 'Kuba' },
-    { id: 'c', value: 'Ala' },
+    { id: 'a', value: 'Ola', isBot: false },
+    { id: 'b', value: 'Kuba', isBot: false },
+    { id: 'c', value: 'Ala', isBot: false },
   ];
 
   it('moves a row to a new position', () => {
@@ -92,10 +92,10 @@ describe('shufflePlayerOrder', () => {
 describe('shufflePlayerOrder with row objects', () => {
   it('shuffles PlayerNameRow objects, keeping each id paired with its value', () => {
     const rows: PlayerNameRow[] = [
-      { id: 'a', value: 'Ola' },
-      { id: 'b', value: 'Kuba' },
-      { id: 'c', value: 'Ala' },
-      { id: 'd', value: 'Zosia' },
+      { id: 'a', value: 'Ola', isBot: false },
+      { id: 'b', value: 'Kuba', isBot: false },
+      { id: 'c', value: 'Ala', isBot: false },
+      { id: 'd', value: 'Zosia', isBot: false },
     ];
     const random = () => 0; // always picks index 0 as the swap target
     const result = shufflePlayerOrder(rows, random);

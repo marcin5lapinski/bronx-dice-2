@@ -19,6 +19,7 @@ interface ScoreBoardProps {
   rollsLeft: number;
   interactive?: boolean;
   pendingCategory?: ScoreCategory | null;
+  botPlayerIds?: Set<string>;
   onScore: (category: ScoreCategory) => void;
 }
 
@@ -63,6 +64,7 @@ function ScoreBoard({
   rollsLeft,
   interactive = true,
   pendingCategory = null,
+  botPlayerIds = new Set(),
   onScore,
 }: ScoreBoardProps) {
   const hasRolled = dice.length === 5;
@@ -118,6 +120,7 @@ function ScoreBoard({
                 title={player.name}
               >
                 {truncateName(player.name)}
+                {botPlayerIds.has(player.id) ? ' 🤖' : ''}
               </th>
             ))}
           </tr>

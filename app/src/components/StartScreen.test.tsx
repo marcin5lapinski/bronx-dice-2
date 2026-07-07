@@ -23,7 +23,11 @@ vi.mock('../services/profileService', () => ({
 
 function renderStartScreen(
   props: {
-    onStart?: (names: string[], accountPlayerIndex: number | null) => void;
+    onStart?: (
+      names: string[],
+      accountPlayerIndex: number | null,
+      botFlags: boolean[]
+    ) => void;
     onOpenAuth?: () => void;
     onOpenProfile?: () => void;
   } = {}
@@ -126,7 +130,7 @@ describe('StartScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null, [false, false]);
   });
 
   it('shows "Zaloguj się" and calls onOpenAuth when signed out', async () => {
@@ -225,7 +229,7 @@ describe('StartScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala'], null);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba', 'Ala'], null, [false, false, false]);
   });
 
   it('disables the drag handles when "Losuj kolejność" is checked', async () => {
@@ -273,7 +277,7 @@ describe('StartScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
     // Fisher-Yates on 2 items with random()=0: i=1, j=floor(0*2)=0, swap(1,0)
-    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola'], null);
+    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola'], null, [false, false]);
   });
 
   it('does not shuffle when "Losuj kolejność" is left unchecked', async () => {
@@ -288,7 +292,7 @@ describe('StartScreen', () => {
     await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null);
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null, [false, false]);
   });
 
   it('auto-fills "Gracz 1" with the signed-in player\'s display name', async () => {
@@ -370,7 +374,7 @@ describe('StartScreen', () => {
     await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Ola Nick', 'Kuba'], 0);
+    expect(onStart).toHaveBeenCalledWith(['Ola Nick', 'Kuba'], 0, [false, false]);
   });
 
   it('keeps tracking the account row after it is manually renamed', async () => {
@@ -399,7 +403,7 @@ describe('StartScreen', () => {
     await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
-    expect(onStart).toHaveBeenCalledWith(['Pseudonim', 'Kuba'], 0);
+    expect(onStart).toHaveBeenCalledWith(['Pseudonim', 'Kuba'], 0, [false, false]);
   });
 
   it('keeps tracking the account row through "Losuj kolejność"', async () => {
@@ -429,6 +433,39 @@ describe('StartScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
 
     // Fisher-Yates on 2 items with random()=0: i=1, j=0, swap(1,0) -> ['Kuba', 'Ola Nick']
-    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola Nick'], 1);
+    expect(onStart).toHaveBeenCalledWith(['Kuba', 'Ola Nick'], 1, [false, false]);
+  });
+
+  it('shows a Bot checkbox for every row except the tracked account row', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+    await openLocalForm(user);
+
+    // Row 0 ("Gracz 1") is always the tracked account row (accountRowId is
+    // fixed to row 0 at mount, regardless of sign-in state), so with the
+    // default 2 rows only row 1 shows a Bot checkbox.
+    expect(screen.getAllByRole('checkbox', { name: 'Bot' })).toHaveLength(1);
+
+    await user.selectOptions(screen.getByLabelText('Liczba graczy'), '3');
+
+    expect(screen.getAllByRole('checkbox', { name: 'Bot' })).toHaveLength(2);
+  });
+
+  it('passes botFlags matching which rows are checked as Bot', async () => {
+    const user = userEvent.setup();
+    const onStart = vi.fn();
+    renderStartScreen({ onStart });
+    await openLocalForm(user);
+
+    await user.clear(screen.getByLabelText('Gracz 1'));
+    await user.type(screen.getByLabelText('Gracz 1'), 'Ola');
+    await user.clear(screen.getByLabelText('Gracz 2'));
+    await user.type(screen.getByLabelText('Gracz 2'), 'Kuba');
+    // Row 0 ("Ola") never shows a Bot checkbox (it's the tracked account
+    // row), so the only checkbox present belongs to row 1 ("Kuba").
+    await user.click(screen.getAllByRole('checkbox', { name: 'Bot' })[0]);
+    await user.click(screen.getByRole('button', { name: 'Rozpocznij grę' }));
+
+    expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null, [false, true]);
   });
 });

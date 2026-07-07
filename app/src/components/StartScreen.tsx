@@ -19,7 +19,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/playerOrder';
 
 interface StartScreenProps {
-  onStart: (playerNames: string[], accountPlayerIndex: number | null) => void;
+  onStart: (
+    playerNames: string[],
+    accountPlayerIndex: number | null,
+    botFlags: boolean[]
+  ) => void;
   onOpenAuth: () => void;
   onOpenProfile: () => void;
 }
@@ -32,14 +36,18 @@ interface PlayerRowFieldProps {
   row: PlayerNameRow;
   label: string;
   dragDisabled: boolean;
+  showBotCheckbox: boolean;
   onChange: (id: string, value: string) => void;
+  onToggleBot: (id: string) => void;
 }
 
 function PlayerRowField({
   row,
   label,
   dragDisabled,
+  showBotCheckbox,
   onChange,
+  onToggleBot,
 }: PlayerRowFieldProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: row.id, disabled: dragDisabled });
@@ -70,6 +78,16 @@ function PlayerRowField({
           onChange={(event) => onChange(row.id, event.target.value)}
         />
       </div>
+      {showBotCheckbox && (
+        <label className="player-row-bot-label">
+          <input
+            type="checkbox"
+            checked={row.isBot}
+            onChange={() => onToggleBot(row.id)}
+          />
+          Bot
+        </label>
+      )}
     </div>
   );
 }
@@ -84,6 +102,7 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
     Array.from({ length: MIN_PLAYERS }, (_, index) => ({
       id: createRowId(),
       value: defaultName(index),
+      isBot: false,
     }))
   );
   const syncedRowId = useRef<string | null>(rows[0].id);
@@ -118,7 +137,9 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
     setRows((current) =>
       Array.from({ length: count }, (_, index) => {
         const existing = current[index];
-        return existing ?? { id: createRowId(), value: defaultName(index) };
+        return (
+          existing ?? { id: createRowId(), value: defaultName(index), isBot: false }
+        );
       })
     );
   };
@@ -129,6 +150,12 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
     }
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, value } : row))
+    );
+  };
+
+  const handleToggleBot = (id: string) => {
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, isBot: !row.isBot } : row))
     );
   };
 
@@ -148,10 +175,15 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
       ? shufflePlayerOrder(visibleRows)
       : visibleRows;
     const finalNames = orderedRows.map((row) => row.value.trim());
+    const botFlags = orderedRows.map((row) => row.isBot);
     const accountPlayerIndex = user
       ? orderedRows.findIndex((row) => row.id === accountRowId.current)
       : -1;
-    onStart(finalNames, accountPlayerIndex === -1 ? null : accountPlayerIndex);
+    onStart(
+      finalNames,
+      accountPlayerIndex === -1 ? null : accountPlayerIndex,
+      botFlags
+    );
   };
 
   return (
@@ -216,7 +248,9 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
                   row={row}
                   label={defaultName(index)}
                   dragDisabled={randomizeOrder}
+                  showBotCheckbox={row.id !== accountRowId.current}
                   onChange={handleNameChange}
+                  onToggleBot={handleToggleBot}
                 />
               ))}
             </SortableContext>

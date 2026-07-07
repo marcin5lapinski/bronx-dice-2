@@ -3,6 +3,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 export interface PlayerNameRow {
   id: string;
   value: string;
+  isBot: boolean;
 }
 
 export function reorderNames(

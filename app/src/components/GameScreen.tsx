@@ -19,6 +19,7 @@ import { recordLocalGameResult } from '../services/statsService';
 
 interface GameScreenProps {
   playerNames: string[];
+  botFlags?: boolean[];
   accountPlayerIndex: number | null;
   onPlayAgain: () => void;
   onExit: () => void;
@@ -26,6 +27,7 @@ interface GameScreenProps {
 
 function GameScreen({
   playerNames,
+  botFlags = [],
   accountPlayerIndex,
   onPlayAgain,
   onExit,
@@ -33,6 +35,11 @@ function GameScreen({
   const { user } = useAuth();
   const [state, setState] = useState<GameState>(() =>
     createGameState(playerNames)
+  );
+  const botPlayerIds = new Set(
+    state.players
+      .filter((_, index) => botFlags[index] === true)
+      .map((player) => player.id)
   );
   // While true, the dice are still mid-animation: ScoreBoard's clickable
   // score previews are hidden so the player can't read the roll's outcome
@@ -83,6 +90,7 @@ function GameScreen({
   }
 
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const isBotTurn = botPlayerIds.has(currentPlayer.id);
 
   const handleExit = () => {
     if (window.confirm('Czy na pewno chcesz zakończyć grę?')) {
@@ -95,7 +103,10 @@ function GameScreen({
       <button type="button" className="back-button" onClick={handleExit}>
         Wyjdź z gry
       </button>
-      <h2>Tura: {currentPlayer.name}</h2>
+      <h2>
+        Tura: {currentPlayer.name}
+        {isBotTurn ? ' 🤖' : ''}
+      </h2>
       <DiceTray
         dice={state.dice}
         heldDice={state.heldDice}
@@ -116,6 +127,7 @@ function GameScreen({
         currentPlayerId={currentPlayer.id}
         dice={isRolling ? [] : state.dice}
         rollsLeft={state.rollsLeft}
+        botPlayerIds={botPlayerIds}
         onScore={(category: ScoreCategory) =>
           setState((current) => applyScore(current, category))
         }

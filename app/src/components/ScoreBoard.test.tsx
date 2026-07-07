@@ -3,7 +3,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ScoreBoard from './ScoreBoard';
-import { createGameState, type DiceValue } from '@bronx-dice/game-engine';
+import {
+  createGameState,
+  createEmptyScoreCard,
+  type DiceValue,
+} from '@bronx-dice/game-engine';
 
 describe('ScoreBoard', () => {
   it('renders category labels and one column per player', () => {
@@ -329,5 +333,30 @@ describe('current player column', () => {
     expect(
       screen.getByRole('columnheader', { name: 'Kuba' })
     ).not.toHaveClass('current-player-col');
+  });
+});
+
+describe('bot indicator', () => {
+  it('shows a bot indicator next to a bot player name', () => {
+    render(
+      <ScoreBoard
+        players={[
+          { id: 'p1', name: 'Ola' },
+          { id: 'p2', name: 'Kuba' },
+        ]}
+        scoreCards={{
+          p1: createEmptyScoreCard(),
+          p2: createEmptyScoreCard(),
+        }}
+        currentPlayerId="p1"
+        dice={[]}
+        rollsLeft={3}
+        botPlayerIds={new Set(['p2'])}
+        onScore={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Kuba 🤖')).toBeInTheDocument();
+    expect(screen.queryByText('Ola 🤖')).not.toBeInTheDocument();
   });
 });
