@@ -3,14 +3,13 @@ import {
   LOWER_CATEGORIES,
   canScoreCategory,
   calculateTotal,
-  isUpperCategory,
-  scoreCategory,
   calculateBonus,
   type Player,
   type PlayerScoreCard,
   type ScoreCategory,
   type DiceValue,
 } from '@bronx-dice/game-engine';
+import { previewScore, scoreValue } from '../utils/previewScore';
 
 interface ScoreBoardProps {
   players: Player[];
@@ -48,25 +47,6 @@ const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   chance: 'Szansa',
   yahtzee: '5X',
 };
-
-function scoreValue(
-  scoreCard: PlayerScoreCard,
-  category: ScoreCategory
-): number | null {
-  return isUpperCategory(category)
-    ? scoreCard.upper[category]
-    : scoreCard.lower[category];
-}
-
-function previewScore(
-  scoreCard: PlayerScoreCard,
-  category: ScoreCategory,
-  dice: DiceValue[],
-  rollsLeft: number
-): number {
-  const preview = scoreCategory(scoreCard, category, dice, rollsLeft);
-  return scoreValue(preview, category) ?? 0;
-}
 
 function playerColClass(
   playerId: string,
