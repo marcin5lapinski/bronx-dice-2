@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { DiceValue } from '@bronx-dice/game-engine';
+import { diceFaceSrc } from '../utils/diceAssets';
 
 export const ROLL_ANIMATION_MS = 1000;
 
@@ -12,10 +13,6 @@ interface DiceTrayProps {
   heldDice: boolean[];
   onToggleHeld: (index: number) => void;
   interactive?: boolean;
-}
-
-function diceFaceSrc(value: DiceValue, held: boolean): string {
-  return `/dice/die-${held ? 'muted' : 'glow'}-${value}.png`;
 }
 
 function DiceTray({ dice, heldDice, onToggleHeld, interactive = true }: DiceTrayProps) {
