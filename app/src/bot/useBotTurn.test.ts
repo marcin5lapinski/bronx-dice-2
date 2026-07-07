@@ -3,8 +3,11 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import {
   createGameState,
+  UPPER_CATEGORIES,
+  LOWER_CATEGORIES,
   type DiceValue,
   type GameState,
+  type PlayerScoreCard,
 } from '@bronx-dice/game-engine';
 import { useBotTurn, DECISION_WINDOW_MS, HOLD_PAUSE_MS } from './useBotTurn';
 import { requestBotMove } from './botClient';
@@ -16,6 +19,15 @@ vi.mock('./botClient', () => ({
 
 function makeState(overrides: Partial<GameState> = {}): GameState {
   return { ...createGameState(['Human', 'Bot']), ...overrides };
+}
+
+// A scorecard with every category already filled in, so that
+// chooseHeuristicCategory has no legal category left and throws.
+function makeFullScoreCard(): PlayerScoreCard {
+  return {
+    upper: Object.fromEntries(UPPER_CATEGORIES.map((category) => [category, 0])) as PlayerScoreCard['upper'],
+    lower: Object.fromEntries(LOWER_CATEGORIES.map((category) => [category, 0])) as PlayerScoreCard['lower'],
+  };
 }
 
 const BOT_IDS = new Set(['player-2']);
@@ -249,5 +261,94 @@ describe('useBotTurn', () => {
     await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
 
     expect(onScore).toHaveBeenCalledWith(expectedCategory);
+  });
+
+  it('does nothing (no onRoll/onToggleHeld/onScore, no unhandled rejection) when both the bot server and the heuristic fallback fail during a reroll decision', async () => {
+    vi.useFakeTimers();
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason);
+    process.on('unhandledRejection', onUnhandledRejection);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const onScore = vi.fn();
+    const onToggleHeld = vi.fn();
+    const onRoll = vi.fn();
+    const dice: DiceValue[] = [1, 1, 1, 4, 5];
+    const fullScoreCard = makeFullScoreCard();
+    const state = makeState({
+      currentPlayerIndex: 1,
+      dice,
+      heldDice: [false, false, false, false, false],
+      rollsLeft: 2,
+      scoreCards: { 'player-1': fullScoreCard, 'player-2': fullScoreCard },
+    });
+    vi.mocked(requestBotMove).mockRejectedValue(new Error('network down'));
+
+    renderHook(() =>
+      useBotTurn({
+        state,
+        isRolling: false,
+        botPlayerIds: BOT_IDS,
+        enabled: true,
+        onRoll,
+        onToggleHeld,
+        onScore,
+      })
+    );
+
+    await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
+    // Flush any microtasks that would surface an unhandled rejection.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onScore).not.toHaveBeenCalled();
+    expect(onToggleHeld).not.toHaveBeenCalled();
+    expect(onRoll).not.toHaveBeenCalled();
+    expect(unhandledRejections).toEqual([]);
+
+    process.off('unhandledRejection', onUnhandledRejection);
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('does nothing (no onScore, no unhandled rejection) when both the bot server and the heuristic fallback fail during a forced score decision', async () => {
+    vi.useFakeTimers();
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason);
+    process.on('unhandledRejection', onUnhandledRejection);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const onScore = vi.fn();
+    const dice: DiceValue[] = [6, 6, 6, 6, 6];
+    const fullScoreCard = makeFullScoreCard();
+    const state = makeState({
+      currentPlayerIndex: 1,
+      dice,
+      heldDice: [true, true, true, true, true],
+      rollsLeft: 0,
+      scoreCards: { 'player-1': fullScoreCard, 'player-2': fullScoreCard },
+    });
+    vi.mocked(requestBotMove).mockRejectedValue(new Error('network down'));
+
+    renderHook(() =>
+      useBotTurn({
+        state,
+        isRolling: false,
+        botPlayerIds: BOT_IDS,
+        enabled: true,
+        onRoll: vi.fn(),
+        onToggleHeld: vi.fn(),
+        onScore,
+      })
+    );
+
+    await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onScore).not.toHaveBeenCalled();
+    expect(unhandledRejections).toEqual([]);
+
+    process.off('unhandledRejection', onUnhandledRejection);
+    consoleErrorSpy.mockRestore();
   });
 });

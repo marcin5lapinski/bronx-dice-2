@@ -24,12 +24,19 @@ interface UseBotTurnOptions {
   onScore: (category: ScoreCategory) => void;
 }
 
+// Sentinel returned when even the heuristic fallback has nothing legal to do
+// (only possible if the scorecard is already fully complete). This should
+// never happen along any reachable code path in this app, but these
+// functions must never throw/reject, so we surface it as "no-op" instead of
+// letting the exception escape.
+const NO_OP = Symbol('no-op');
+
 async function getRollDecision(
   scoreCard: PlayerScoreCard,
   dice: DiceValue[],
   heldDice: boolean[],
   rollsLeft: number
-): Promise<RollDecision> {
+): Promise<RollDecision | typeof NO_OP> {
   try {
     const prompt = buildRollDecisionPrompt(scoreCard, dice, heldDice, rollsLeft);
     const raw = await requestBotMove(prompt);
@@ -40,14 +47,22 @@ async function getRollDecision(
   } catch {
     // Any network/CLI/parse failure falls through to the heuristic below.
   }
-  return { action: 'score', category: chooseHeuristicCategory(scoreCard, dice, rollsLeft) };
+  try {
+    return { action: 'score', category: chooseHeuristicCategory(scoreCard, dice, rollsLeft) };
+  } catch (error) {
+    console.error(
+      'useBotTurn: chooseHeuristicCategory threw with no legal category available; skipping this turn.',
+      error
+    );
+    return NO_OP;
+  }
 }
 
 async function getScoreDecision(
   scoreCard: PlayerScoreCard,
   dice: DiceValue[],
   rollsLeft: number
-): Promise<ScoreCategory> {
+): Promise<ScoreCategory | typeof NO_OP> {
   try {
     const prompt = buildScoreDecisionPrompt(scoreCard, dice, rollsLeft);
     const raw = await requestBotMove(prompt);
@@ -58,7 +73,15 @@ async function getScoreDecision(
   } catch {
     // Any network/CLI/parse failure falls through to the heuristic below.
   }
-  return chooseHeuristicCategory(scoreCard, dice, rollsLeft);
+  try {
+    return chooseHeuristicCategory(scoreCard, dice, rollsLeft);
+  } catch (error) {
+    console.error(
+      'useBotTurn: chooseHeuristicCategory threw with no legal category available; skipping this turn.',
+      error
+    );
+    return NO_OP;
+  }
 }
 
 export function useBotTurn({
@@ -99,6 +122,9 @@ export function useBotTurn({
       withDecisionWindow(DECISION_WINDOW_MS, () =>
         getRollDecision(scoreCard, dice, heldDice, rollsLeft)
       ).then((decision) => {
+        if (decision === NO_OP) {
+          return;
+        }
         if (decision.action === 'score') {
           onScore(decision.category);
           return;
@@ -113,7 +139,12 @@ export function useBotTurn({
     } else {
       withDecisionWindow(DECISION_WINDOW_MS, () =>
         getScoreDecision(scoreCard, dice, rollsLeft)
-      ).then(onScore);
+      ).then((category) => {
+        if (category === NO_OP) {
+          return;
+        }
+        onScore(category);
+      });
     }
   }, [state, isRolling, botPlayerIds, enabled, onRoll, onToggleHeld, onScore]);
 }
