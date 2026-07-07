@@ -16,6 +16,7 @@ import ScoreBoard from './ScoreBoard';
 import WinnerScreen from './WinnerScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { recordLocalGameResult } from '../services/statsService';
+import { useBotTurn } from '../bot/useBotTurn';
 
 interface GameScreenProps {
   playerNames: string[];
@@ -78,6 +79,29 @@ function GameScreen({
     });
   }, [state, accountPlayerIndex, user]);
 
+  const handleRoll = () => {
+    setState((current) => rollInTurn(current));
+    setIsRolling(true);
+  };
+
+  const handleToggleHeld = (index: number) => {
+    setState((current) => toggleHeldDie(current, index));
+  };
+
+  const handleScore = (category: ScoreCategory) => {
+    setState((current) => applyScore(current, category));
+  };
+
+  useBotTurn({
+    state,
+    isRolling,
+    botPlayerIds,
+    enabled: !isGameOver(state),
+    onRoll: handleRoll,
+    onToggleHeld: handleToggleHeld,
+    onScore: handleScore,
+  });
+
   if (isGameOver(state)) {
     return (
       <WinnerScreen
@@ -110,27 +134,19 @@ function GameScreen({
       <DiceTray
         dice={state.dice}
         heldDice={state.heldDice}
-        onToggleHeld={(index) =>
-          setState((current) => toggleHeldDie(current, index))
-        }
+        onToggleHeld={handleToggleHeld}
+        interactive={!isBotTurn}
       />
-      <RollButton
-        rollsLeft={state.rollsLeft}
-        onRoll={() => {
-          setState((current) => rollInTurn(current));
-          setIsRolling(true);
-        }}
-      />
+      <RollButton rollsLeft={state.rollsLeft} onRoll={handleRoll} interactive={!isBotTurn} />
       <ScoreBoard
         players={state.players}
         scoreCards={state.scoreCards}
         currentPlayerId={currentPlayer.id}
         dice={isRolling ? [] : state.dice}
         rollsLeft={state.rollsLeft}
+        interactive={!isBotTurn}
         botPlayerIds={botPlayerIds}
-        onScore={(category: ScoreCategory) =>
-          setState((current) => applyScore(current, category))
-        }
+        onScore={handleScore}
       />
     </div>
   );

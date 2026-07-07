@@ -16,6 +16,10 @@ vi.mock('../services/statsService', () => ({
   recordLocalGameResult: vi.fn(),
 }));
 
+vi.mock('../bot/botClient', () => ({
+  requestBotMove: vi.fn(),
+}));
+
 // The engine enforces MIN_PLAYERS = 2 (createGameState throws below that),
 // so these tests use 2 players even though only player 0's result matters.
 // Every roll is mocked to always show [1,1,1,1,1] (Math.random -> 0), and
@@ -236,5 +240,72 @@ describe('GameScreen', () => {
     await playGameToCompletion(2);
 
     expect(recordLocalGameResult).not.toHaveBeenCalled();
+  });
+
+  it('auto-plays a bot turn: rolls, decides, and scores without any clicks', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0); // every die shows 1
+    const { requestBotMove } = await import('../bot/botClient');
+    vi.mocked(requestBotMove).mockResolvedValue({ action: 'score', category: 'aces' });
+
+    render(
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        botFlags={[false, true]}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Tura: Ola')).toBeInTheDocument();
+
+    // Ola (human) takes her turn manually and scores the first open category,
+    // handing the turn to Kuba, the bot.
+    fireEvent.click(screen.getByRole('button', { name: 'Rzuć kośćmi' }));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    fireEvent.click(document.querySelectorAll('.score-board tbody button')[0]);
+
+    expect(screen.getByText('Tura: Kuba 🤖')).toBeInTheDocument();
+
+    // Kuba's turn should now play out on its own: auto-roll, roll animation,
+    // decision window, and score — with nobody clicking anything. Each hop of
+    // the bot's async chain (state update -> effect -> promise -> timer ->
+    // state update -> ...) needs its own `act` boundary to flush React's
+    // passive effects, so a single big `advanceTimersByTimeAsync` call isn't
+    // enough here — advance in small steps, stopping once the turn hands
+    // back to Ola.
+    for (
+      let i = 0;
+      i < 30 && screen.queryByText('Tura: Ola') === null;
+      i++
+    ) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+    }
+
+    expect(screen.getByText('Tura: Ola')).toBeInTheDocument();
+  });
+
+  it('does not let a human click for the bot during its turn', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const { requestBotMove } = await import('../bot/botClient');
+    vi.mocked(requestBotMove).mockResolvedValue({ action: 'score', category: 'aces' });
+
+    render(
+      <GameScreen
+        playerNames={['Ola', 'Kuba']}
+        botFlags={[true, false]}
+        accountPlayerIndex={null}
+        onPlayAgain={() => {}}
+        onExit={() => {}}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toBeDisabled();
   });
 });
