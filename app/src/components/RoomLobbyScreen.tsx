@@ -86,6 +86,8 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
   const [orderedIds, setOrderedIds] = useState<string[]>(() => room.players.map((p) => p.id));
   const [randomizeOrder, setRandomizeOrder] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [togglingReady, setTogglingReady] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const ownPlayer = room.players.find((player) => player.id === ownUid);
   const isHost = room.hostId === ownUid;
@@ -120,14 +122,17 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
   };
 
   const handleToggleReady = async () => {
-    if (!ownPlayer) {
+    if (!ownPlayer || togglingReady) {
       return;
     }
     setError(null);
+    setTogglingReady(true);
     try {
       await setReady(roomId, !ownPlayer.ready);
     } catch (err) {
       setError(errorMessage(err));
+    } finally {
+      setTogglingReady(false);
     }
   };
 
@@ -144,12 +149,18 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
   };
 
   const handleLeave = async () => {
+    if (leaving) {
+      return;
+    }
     setError(null);
+    setLeaving(true);
     try {
       await leaveRoom(roomId);
       onLeft();
     } catch (err) {
       setError(errorMessage(err));
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -199,8 +210,17 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
         </ul>
       )}
       {ownPlayer && (
-        <button type="button" onClick={handleToggleReady}>
-          {ownPlayer.ready ? 'Niegotowy' : 'Gotowy'}
+        <button type="button" disabled={togglingReady} onClick={handleToggleReady}>
+          {togglingReady ? (
+            <>
+              Zapisuję…
+              <InlineSpinner />
+            </>
+          ) : ownPlayer.ready ? (
+            'Niegotowy'
+          ) : (
+            'Gotowy'
+          )}
         </button>
       )}
       {isHost && (
@@ -215,8 +235,15 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
           )}
         </button>
       )}
-      <button type="button" onClick={handleLeave}>
-        Opuść pokój
+      <button type="button" disabled={leaving} onClick={handleLeave}>
+        {leaving ? (
+          <>
+            Opuszczam…
+            <InlineSpinner />
+          </>
+        ) : (
+          'Opuść pokój'
+        )}
       </button>
     </div>
   );

@@ -33,10 +33,13 @@ function lobbyRoom(overrides: Partial<LobbyRoom> = {}): LobbyRoom {
 describe('RoomLobbyScreen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    // `startGame` is a plain `vi.fn()` from the `vi.mock` factory (not
-    // `vi.spyOn`), so `restoreAllMocks` alone doesn't clear its call history
-    // or any custom `mockImplementation` between tests — reset explicitly.
+    // These are plain `vi.fn()`s from the `vi.mock` factory (not
+    // `vi.spyOn`), so `restoreAllMocks` alone doesn't clear their call
+    // history or any custom `mockImplementation` between tests — reset
+    // explicitly.
     vi.mocked(startGame).mockReset();
+    vi.mocked(setReady).mockReset();
+    vi.mocked(leaveRoom).mockReset();
   });
 
   it('lists every player with their name and marks the host', () => {
@@ -166,5 +169,45 @@ describe('RoomLobbyScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Opuść pokój' }));
     expect(leaveRoom).toHaveBeenCalledWith('AAAAA');
     expect(onLeft).toHaveBeenCalled();
+  });
+
+  it('shows a pending label while the ready toggle is in flight and does not call setReady twice', () => {
+    let resolveReady!: () => void;
+    vi.mocked(setReady).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveReady = () => resolve(undefined);
+        })
+    );
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    const button = screen.getByRole('button', { name: 'Gotowy' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(setReady).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Zapisuję…')).toBeInTheDocument();
+
+    resolveReady();
+  });
+
+  it('shows a pending label while leaving and does not call leaveRoom twice', () => {
+    let resolveLeave!: () => void;
+    vi.mocked(leaveRoom).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLeave = () => resolve(undefined);
+        })
+    );
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+
+    const button = screen.getByRole('button', { name: 'Opuść pokój' });
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(leaveRoom).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Opuszczam…')).toBeInTheDocument();
+
+    resolveLeave();
   });
 });
