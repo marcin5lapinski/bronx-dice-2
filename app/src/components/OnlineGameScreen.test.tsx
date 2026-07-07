@@ -397,6 +397,31 @@ describe('OnlineGameScreen', () => {
     resolveToggle();
   });
 
+  it('disables the roll button while a held-die toggle is still in flight', () => {
+    let resolveToggle!: () => void;
+    vi.mocked(toggleHeldDie).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveToggle = () => resolve(undefined);
+        })
+    );
+    const room = playingRoom({ dice: [1, 2, 3, 4, 5] });
+    const { container } = render(
+      <OnlineGameScreen room={room} roomId="AAAAA" ownUid="uid-1" onExit={() => {}} />
+    );
+
+    const dieButtons = container.querySelectorAll('.dice-tray .die');
+    fireEvent.click(dieButtons[0]);
+
+    const rollButton = screen.getByRole('button', { name: 'Rzuć kośćmi' });
+    expect(rollButton).toBeDisabled();
+
+    fireEvent.click(rollButton);
+    expect(rollDice).not.toHaveBeenCalled();
+
+    resolveToggle();
+  });
+
   it('reverts the optimistic held state if the server call fails', async () => {
     vi.mocked(toggleHeldDie).mockRejectedValueOnce(new Error('network error'));
     const room = playingRoom({ dice: [1, 2, 3, 4, 5] });

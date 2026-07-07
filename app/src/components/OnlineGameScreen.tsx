@@ -52,6 +52,15 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const [optimisticHeldDice, setOptimisticHeldDice] = useState<boolean[] | null>(null);
   const displayedHeldDice = optimisticHeldDice ?? room.heldDice;
 
+  // rollDice and toggleHeldDie are independent Cloud Function calls with no
+  // ordering guarantee between them. If a roll reaches the server before a
+  // just-clicked hold has landed in Firestore, the server rerolls that die
+  // (its heldDice is still false there) while our optimistic UI already
+  // shows it as held — silently changing its value with no roll animation.
+  // Blocking Roll until every in-flight hold toggle has been acknowledged
+  // guarantees the hold is committed before a roll can be requested.
+  const [heldTogglesPending, setHeldTogglesPending] = useState(0);
+
   useEffect(() => {
     setOptimisticHeldDice(null);
   }, [room.currentPlayerIndex]);
@@ -144,9 +153,14 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
   const handleToggleHeld = (index: number) => {
     const base = optimisticHeldDice ?? room.heldDice;
     setOptimisticHeldDice(base.map((held, i) => (i === index ? !held : held)));
-    toggleHeldDie(roomId, index).catch(() => {
-      setOptimisticHeldDice(null);
-    });
+    setHeldTogglesPending((count) => count + 1);
+    toggleHeldDie(roomId, index)
+      .catch(() => {
+        setOptimisticHeldDice(null);
+      })
+      .finally(() => {
+        setHeldTogglesPending((count) => count - 1);
+      });
   };
 
   const handleAbort = () => {
@@ -181,10 +195,10 @@ function OnlineGameScreen({ room, roomId, ownUid, onExit }: OnlineGameScreenProp
       />
       <RollButton
         rollsLeft={room.rollsLeft}
-        interactive={isOwnTurn && !rollPending}
+        interactive={isOwnTurn && !rollPending && heldTogglesPending === 0}
         pending={rollPending}
         onRoll={() => {
-          if (rollPending) {
+          if (rollPending || heldTogglesPending > 0) {
             return;
           }
           setRollPending(true);
