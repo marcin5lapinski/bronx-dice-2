@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   DiceValue,
   GameState,
@@ -92,8 +92,9 @@ export function useBotTurn({
   onRoll,
   onToggleHeld,
   onScore,
-}: UseBotTurnOptions): void {
+}: UseBotTurnOptions): boolean {
   const lastHandledRef = useRef<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
 
   useEffect(() => {
     if (!enabled || isRolling) {
@@ -119,9 +120,11 @@ export function useBotTurn({
     const { dice, heldDice, rollsLeft } = state;
 
     if (rollsLeft > 0) {
+      setIsThinking(true);
       withDecisionWindow(DECISION_WINDOW_MS, () =>
         getRollDecision(scoreCard, dice, heldDice, rollsLeft)
       ).then((decision) => {
+        setIsThinking(false);
         if (decision === NO_OP) {
           return;
         }
@@ -137,9 +140,11 @@ export function useBotTurn({
         setTimeout(onRoll, HOLD_PAUSE_MS);
       });
     } else {
+      setIsThinking(true);
       withDecisionWindow(DECISION_WINDOW_MS, () =>
         getScoreDecision(scoreCard, dice, rollsLeft)
       ).then((category) => {
+        setIsThinking(false);
         if (category === NO_OP) {
           return;
         }
@@ -147,4 +152,6 @@ export function useBotTurn({
       });
     }
   }, [state, isRolling, botPlayerIds, enabled, onRoll, onToggleHeld, onScore]);
+
+  return isThinking;
 }

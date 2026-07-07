@@ -246,7 +246,12 @@ describe('GameScreen', () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every die shows 1
     const { requestBotMove } = await import('../bot/botClient');
-    vi.mocked(requestBotMove).mockResolvedValue({ action: 'score', category: 'aces' });
+    let resolveBotMove!: (value: { action: 'score'; category: 'aces' }) => void;
+    vi.mocked(requestBotMove).mockReturnValue(
+      new Promise((resolve) => {
+        resolveBotMove = resolve;
+      })
+    );
 
     render(
       <GameScreen
@@ -270,13 +275,28 @@ describe('GameScreen', () => {
 
     expect(screen.getByText('Tura: Kuba 🤖')).toBeInTheDocument();
 
-    // Kuba's turn should now play out on its own: auto-roll, roll animation,
-    // decision window, and score — with nobody clicking anything. Each hop of
-    // the bot's async chain (state update -> effect -> promise -> timer ->
-    // state update -> ...) needs its own `act` boundary to flush React's
-    // passive effects, so a single big `advanceTimersByTimeAsync` call isn't
-    // enough here — advance in small steps, stopping once the turn hands
-    // back to Ola.
+    // Kuba's turn now auto-rolls, then its roll animation settles, then it
+    // asks the (mocked, still-pending) bot server for a decision. While that
+    // request is in flight, the roll button should show the "bot is
+    // thinking" pending-glow indicator — the whole point of this feature is
+    // that the bot appears to be thinking rather than the board looking
+    // frozen.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000); // auto-roll + roll animation
+    });
+
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toHaveClass(
+      'pending-glow'
+    );
+
+    resolveBotMove({ action: 'score', category: 'aces' });
+
+    // Kuba's turn should now play out on its own: decision window and score
+    // — with nobody clicking anything. Each hop of the bot's async chain
+    // (state update -> effect -> promise -> timer -> state update -> ...)
+    // needs its own `act` boundary to flush React's passive effects, so a
+    // single big `advanceTimersByTimeAsync` call isn't enough here — advance
+    // in small steps, stopping once the turn hands back to Ola.
     for (
       let i = 0;
       i < 30 && screen.queryByText('Tura: Ola') === null;
@@ -288,6 +308,9 @@ describe('GameScreen', () => {
     }
 
     expect(screen.getByText('Tura: Ola')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).not.toHaveClass(
+      'pending-glow'
+    );
   });
 
   it('does not let a human click for the bot during its turn', async () => {

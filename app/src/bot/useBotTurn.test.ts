@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import {
   createGameState,
   UPPER_CATEGORIES,
@@ -42,7 +42,7 @@ describe('useBotTurn', () => {
     const onRoll = vi.fn();
     const state = makeState({ currentPlayerIndex: 1 });
 
-    renderHook(() =>
+    const { result } = renderHook(() =>
       useBotTurn({
         state,
         isRolling: false,
@@ -56,6 +56,7 @@ describe('useBotTurn', () => {
 
     expect(onRoll).toHaveBeenCalledTimes(1);
     expect(requestBotMove).not.toHaveBeenCalled();
+    expect(result.current).toBe(false);
   });
 
   it('does nothing while the roll animation is in progress', () => {
@@ -149,7 +150,7 @@ describe('useBotTurn', () => {
       hold: [true, true, true, false, false],
     });
 
-    renderHook(() =>
+    const { result } = renderHook(() =>
       useBotTurn({
         state,
         isRolling: false,
@@ -161,7 +162,9 @@ describe('useBotTurn', () => {
       })
     );
 
-    await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
+    });
 
     expect(onToggleHeld).toHaveBeenCalledWith(0);
     expect(onToggleHeld).toHaveBeenCalledWith(1);
@@ -169,6 +172,46 @@ describe('useBotTurn', () => {
     expect(onToggleHeld).not.toHaveBeenCalledWith(3);
     expect(onToggleHeld).not.toHaveBeenCalledWith(4);
     expect(onRoll).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe(false);
+  });
+
+  it('sets isThinking to true while a roll decision is in flight, then false once it resolves', async () => {
+    vi.useFakeTimers();
+    const onToggleHeld = vi.fn();
+    const onRoll = vi.fn();
+    const dice: DiceValue[] = [1, 1, 1, 4, 5];
+    const heldDice = [false, false, false, false, false];
+    const state = makeState({ currentPlayerIndex: 1, dice, heldDice, rollsLeft: 2 });
+    let resolveBotMove!: (value: { action: 'reroll'; hold: boolean[] }) => void;
+    vi.mocked(requestBotMove).mockReturnValue(
+      new Promise((resolve) => {
+        resolveBotMove = resolve;
+      })
+    );
+
+    const { result } = renderHook(() =>
+      useBotTurn({
+        state,
+        isRolling: false,
+        botPlayerIds: BOT_IDS,
+        enabled: true,
+        onRoll,
+        onToggleHeld,
+        onScore: vi.fn(),
+      })
+    );
+
+    // The decision request is now in flight (the mocked promise hasn't
+    // resolved yet), so the "bot is thinking" indicator should be on.
+    expect(result.current).toBe(true);
+
+    resolveBotMove({ action: 'reroll', hold: [true, true, true, false, false] });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
+    });
+
+    expect(onRoll).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe(false);
   });
 
   it('applies a score decision when the roll decision says to stop', async () => {
@@ -212,7 +255,7 @@ describe('useBotTurn', () => {
     });
     vi.mocked(requestBotMove).mockResolvedValue({ category: 'sixes' });
 
-    renderHook(() =>
+    const { result } = renderHook(() =>
       useBotTurn({
         state,
         isRolling: false,
@@ -224,9 +267,14 @@ describe('useBotTurn', () => {
       })
     );
 
-    await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
+    expect(result.current).toBe(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
+    });
 
     expect(onScore).toHaveBeenCalledWith('sixes');
+    expect(result.current).toBe(false);
   });
 
   it('falls back to the heuristic when the bot server call fails', async () => {

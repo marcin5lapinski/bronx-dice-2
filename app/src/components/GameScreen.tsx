@@ -92,7 +92,7 @@ function GameScreen({
     setState((current) => applyScore(current, category));
   };
 
-  useBotTurn({
+  const isBotThinking = useBotTurn({
     state,
     isRolling,
     botPlayerIds,
@@ -137,7 +137,12 @@ function GameScreen({
         onToggleHeld={handleToggleHeld}
         interactive={!isBotTurn}
       />
-      <RollButton rollsLeft={state.rollsLeft} onRoll={handleRoll} interactive={!isBotTurn} />
+      <RollButton
+        rollsLeft={state.rollsLeft}
+        onRoll={handleRoll}
+        interactive={!isBotTurn}
+        pending={isBotThinking}
+      />
       <ScoreBoard
         players={state.players}
         scoreCards={state.scoreCards}
