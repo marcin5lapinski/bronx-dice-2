@@ -17,6 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { MIN_PLAYERS, MAX_PLAYERS } from '@bronx-dice/game-engine';
 import { useAuth } from '../contexts/AuthContext';
 import { reorderNames, shufflePlayerOrder, type PlayerNameRow } from '../utils/playerOrder';
+import HowToPlayModal from './HowToPlayModal';
 
 interface StartScreenProps {
   onStart: (
@@ -113,6 +114,7 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
   const accountRowId = useRef(rows[0].id);
   const [randomizeOrder, setRandomizeOrder] = useState(false);
   const [showLocalForm, setShowLocalForm] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -193,6 +195,13 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
         src="/dice/logos/logo-bd2-2-header.png"
         alt="Bronx Dice"
       />
+      <button
+        type="button"
+        className="how-to-play-button"
+        onClick={() => setShowHowToPlay(true)}
+      >
+        Jak grać?
+      </button>
       {user && (
         <button type="button" onClick={onOpenAuth}>
           Zagraj online
@@ -264,6 +273,10 @@ function StartScreen({ onStart, onOpenAuth, onOpenProfile }: StartScreenProps) {
             Rozpocznij grę
           </button>
         </>
+      )}
+
+      {showHowToPlay && (
+        <HowToPlayModal onClose={() => setShowHowToPlay(false)} />
       )}
     </div>
   );

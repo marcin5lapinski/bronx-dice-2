@@ -468,4 +468,23 @@ describe('StartScreen', () => {
 
     expect(onStart).toHaveBeenCalledWith(['Ola', 'Kuba'], null, [false, true]);
   });
+
+  it('opens the how-to-play modal when "Jak grać?" is clicked', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await user.click(screen.getByRole('button', { name: 'Jak grać?' }));
+
+    expect(screen.getByRole('dialog', { name: 'Jak grać?' })).toBeInTheDocument();
+  });
+
+  it('closes the how-to-play modal when "Zamknij" is clicked', async () => {
+    const user = userEvent.setup();
+    renderStartScreen();
+
+    await user.click(screen.getByRole('button', { name: 'Jak grać?' }));
+    await user.click(screen.getByRole('button', { name: 'Zamknij' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Jak grać?' })).not.toBeInTheDocument();
+  });
 });

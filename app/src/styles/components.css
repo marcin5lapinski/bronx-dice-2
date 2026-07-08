@@ -210,6 +210,17 @@
   background: transparent;
 }
 
+.start-screen .how-to-play-button {
+  align-self: flex-end;
+  width: fit-content;
+  background: var(--accent-blue-bg);
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+  box-shadow: 0 0 10px var(--accent-blue-glow);
+  padding: 8px 14px;
+  margin-top: 0;
+}
+
 /* HowToPlayModal */
 .how-to-play-overlay {
   position: fixed;
