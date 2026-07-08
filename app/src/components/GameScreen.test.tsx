@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import type { User } from 'firebase/auth';
 import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '@bronx-dice/game-engine';
+import * as gameEngine from '@bronx-dice/game-engine';
 import GameScreen from './GameScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { recordLocalGameResult } from '../services/statsService';
@@ -16,9 +17,14 @@ vi.mock('../services/statsService', () => ({
   recordLocalGameResult: vi.fn(),
 }));
 
-vi.mock('../bot/botClient', () => ({
-  requestBotMove: vi.fn(),
-}));
+vi.mock('@bronx-dice/game-engine', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@bronx-dice/game-engine')>();
+  return {
+    ...actual,
+    chooseBotRollDecision: vi.fn(),
+    chooseBotScoreDecision: vi.fn(),
+  };
+});
 
 // The engine enforces MIN_PLAYERS = 2 (createGameState throws below that),
 // so these tests use 2 players even though only player 0's result matters.
@@ -245,13 +251,10 @@ describe('GameScreen', () => {
   it('auto-plays a bot turn: rolls, decides, and scores without any clicks', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0); // every die shows 1
-    const { requestBotMove } = await import('../bot/botClient');
-    let resolveBotMove!: (value: { action: 'score'; category: 'aces' }) => void;
-    vi.mocked(requestBotMove).mockReturnValue(
-      new Promise((resolve) => {
-        resolveBotMove = resolve;
-      })
-    );
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReturnValue({
+      action: 'score',
+      category: 'aces',
+    });
 
     render(
       <GameScreen
@@ -275,12 +278,12 @@ describe('GameScreen', () => {
 
     expect(screen.getByText('Tura: Kuba 🤖')).toBeInTheDocument();
 
-    // Kuba's turn now auto-rolls, then its roll animation settles, then it
-    // asks the (mocked, still-pending) bot server for a decision. While that
-    // request is in flight, the roll button should show the "bot is
-    // thinking" pending-glow indicator — the whole point of this feature is
-    // that the bot appears to be thinking rather than the board looking
-    // frozen.
+    // Kuba's turn now auto-rolls, then its roll animation settles, then the
+    // (mocked) EV engine decides synchronously — but withDecisionWindow still
+    // pads the decision to DECISION_WINDOW_MS for UX pacing. While that
+    // window is running, the roll button should show the "bot is thinking"
+    // pending-glow indicator — the whole point of this feature is that the
+    // bot appears to be thinking rather than the board looking frozen.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000); // auto-roll + roll animation
     });
@@ -288,8 +291,6 @@ describe('GameScreen', () => {
     expect(screen.getByRole('button', { name: 'Rzuć kośćmi' })).toHaveClass(
       'pending-glow'
     );
-
-    resolveBotMove({ action: 'score', category: 'aces' });
 
     // Kuba's turn should now play out on its own: decision window and score
     // — with nobody clicking anything. Each hop of the bot's async chain
@@ -316,8 +317,10 @@ describe('GameScreen', () => {
   it('does not let a human click for the bot during its turn', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    const { requestBotMove } = await import('../bot/botClient');
-    vi.mocked(requestBotMove).mockResolvedValue({ action: 'score', category: 'aces' });
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReturnValue({
+      action: 'score',
+      category: 'aces',
+    });
 
     render(
       <GameScreen
