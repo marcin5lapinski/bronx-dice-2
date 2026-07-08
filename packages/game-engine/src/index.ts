@@ -5,3 +5,6 @@ export * from './gameState';
 export * from './turn';
 export * from './scoring/upperSection';
 export * from './scoring/combinations';
+export * from './bot/rerollOutcomes';
+export * from './bot/types';
+export * from './bot/strategy';
