@@ -5,7 +5,6 @@
   "workspaces": [
     "app",
     "functions",
-    "bot-server",
     "packages/*"
   ],
   "scripts": {
