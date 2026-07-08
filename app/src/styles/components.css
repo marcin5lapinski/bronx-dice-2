@@ -580,6 +580,12 @@
   letter-spacing: 1px;
 }
 
+.room-lobby-screen .copy-room-code-button {
+  padding: 4px 10px;
+  font-size: 11px;
+  margin: 0;
+}
+
 /* Auth screens (Login/Register/ForgotPassword/ProfileSetup/Profile) */
 .auth-screen {
   display: flex;
