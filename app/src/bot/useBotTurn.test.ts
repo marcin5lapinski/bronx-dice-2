@@ -9,20 +9,24 @@ import {
   type GameState,
   type PlayerScoreCard,
 } from '@bronx-dice/game-engine';
+import * as gameEngine from '@bronx-dice/game-engine';
 import { useBotTurn, DECISION_WINDOW_MS, HOLD_PAUSE_MS } from './useBotTurn';
-import { requestBotMove } from './botClient';
-import { chooseHeuristicCategory } from './heuristic';
 
-vi.mock('./botClient', () => ({
-  requestBotMove: vi.fn(),
-}));
+vi.mock('@bronx-dice/game-engine', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@bronx-dice/game-engine')>();
+  return {
+    ...actual,
+    chooseBotRollDecision: vi.fn(),
+    chooseBotScoreDecision: vi.fn(),
+  };
+});
 
 function makeState(overrides: Partial<GameState> = {}): GameState {
   return { ...createGameState(['Human', 'Bot']), ...overrides };
 }
 
-// A scorecard with every category already filled in, so that
-// chooseHeuristicCategory has no legal category left and throws.
+// A scorecard with every category already filled in, so the EV engine has no
+// legal category left and throws.
 function makeFullScoreCard(): PlayerScoreCard {
   return {
     upper: Object.fromEntries(UPPER_CATEGORIES.map((category) => [category, 0])) as PlayerScoreCard['upper'],
@@ -34,11 +38,12 @@ const BOT_IDS = new Set(['player-2']);
 
 describe('useBotTurn', () => {
   afterEach(() => {
-    vi.mocked(requestBotMove).mockReset();
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReset();
+    vi.mocked(gameEngine.chooseBotScoreDecision).mockReset();
     vi.useRealTimers();
   });
 
-  it('auto-rolls at the start of a bot turn without asking the bot server', () => {
+  it('auto-rolls at the start of a bot turn without asking the EV engine', () => {
     const onRoll = vi.fn();
     const state = makeState({ currentPlayerIndex: 1 });
 
@@ -55,7 +60,7 @@ describe('useBotTurn', () => {
     );
 
     expect(onRoll).toHaveBeenCalledTimes(1);
-    expect(requestBotMove).not.toHaveBeenCalled();
+    expect(gameEngine.chooseBotRollDecision).not.toHaveBeenCalled();
     expect(result.current).toBe(false);
   });
 
@@ -145,7 +150,7 @@ describe('useBotTurn', () => {
     const dice: DiceValue[] = [1, 1, 1, 4, 5];
     const heldDice = [false, false, false, false, false];
     const state = makeState({ currentPlayerIndex: 1, dice, heldDice, rollsLeft: 2 });
-    vi.mocked(requestBotMove).mockResolvedValue({
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReturnValue({
       action: 'reroll',
       hold: [true, true, true, false, false],
     });
@@ -166,6 +171,11 @@ describe('useBotTurn', () => {
       await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
     });
 
+    expect(gameEngine.chooseBotRollDecision).toHaveBeenCalledWith(
+      state.scoreCards['player-2'],
+      dice,
+      2
+    );
     expect(onToggleHeld).toHaveBeenCalledWith(0);
     expect(onToggleHeld).toHaveBeenCalledWith(1);
     expect(onToggleHeld).toHaveBeenCalledWith(2);
@@ -175,19 +185,17 @@ describe('useBotTurn', () => {
     expect(result.current).toBe(false);
   });
 
-  it('sets isThinking to true while a roll decision is in flight, then false once it resolves', async () => {
+  it('sets isThinking to true for the decision window, then false once it elapses', async () => {
     vi.useFakeTimers();
     const onToggleHeld = vi.fn();
     const onRoll = vi.fn();
     const dice: DiceValue[] = [1, 1, 1, 4, 5];
     const heldDice = [false, false, false, false, false];
     const state = makeState({ currentPlayerIndex: 1, dice, heldDice, rollsLeft: 2 });
-    let resolveBotMove!: (value: { action: 'reroll'; hold: boolean[] }) => void;
-    vi.mocked(requestBotMove).mockReturnValue(
-      new Promise((resolve) => {
-        resolveBotMove = resolve;
-      })
-    );
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReturnValue({
+      action: 'reroll',
+      hold: [true, true, true, false, false],
+    });
 
     const { result } = renderHook(() =>
       useBotTurn({
@@ -201,11 +209,10 @@ describe('useBotTurn', () => {
       })
     );
 
-    // The decision request is now in flight (the mocked promise hasn't
-    // resolved yet), so the "bot is thinking" indicator should be on.
+    // The artificial decision window is still running, even though the
+    // (synchronous, mocked) EV computation itself already resolved.
     expect(result.current).toBe(true);
 
-    resolveBotMove({ action: 'reroll', hold: [true, true, true, false, false] });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
     });
@@ -224,7 +231,10 @@ describe('useBotTurn', () => {
       heldDice: [false, false, false, false, false],
       rollsLeft: 2,
     });
-    vi.mocked(requestBotMove).mockResolvedValue({ action: 'score', category: 'fives' });
+    vi.mocked(gameEngine.chooseBotRollDecision).mockReturnValue({
+      action: 'score',
+      category: 'fives',
+    });
 
     renderHook(() =>
       useBotTurn({
@@ -253,7 +263,7 @@ describe('useBotTurn', () => {
       heldDice: [true, true, true, true, true],
       rollsLeft: 0,
     });
-    vi.mocked(requestBotMove).mockResolvedValue({ category: 'sixes' });
+    vi.mocked(gameEngine.chooseBotScoreDecision).mockReturnValue('sixes');
 
     const { result } = renderHook(() =>
       useBotTurn({
@@ -273,45 +283,16 @@ describe('useBotTurn', () => {
       await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
     });
 
+    expect(gameEngine.chooseBotScoreDecision).toHaveBeenCalledWith(
+      state.scoreCards['player-2'],
+      dice,
+      0
+    );
     expect(onScore).toHaveBeenCalledWith('sixes');
     expect(result.current).toBe(false);
   });
 
-  it('falls back to the heuristic when the bot server call fails', async () => {
-    vi.useFakeTimers();
-    const onScore = vi.fn();
-    const dice: DiceValue[] = [1, 1, 1, 4, 5];
-    const state = makeState({
-      currentPlayerIndex: 1,
-      dice,
-      heldDice: [false, false, false, false, false],
-      rollsLeft: 2,
-    });
-    vi.mocked(requestBotMove).mockRejectedValue(new Error('network down'));
-    const expectedCategory = chooseHeuristicCategory(
-      state.scoreCards['player-2'],
-      dice,
-      2
-    );
-
-    renderHook(() =>
-      useBotTurn({
-        state,
-        isRolling: false,
-        botPlayerIds: BOT_IDS,
-        enabled: true,
-        onRoll: vi.fn(),
-        onToggleHeld: vi.fn(),
-        onScore,
-      })
-    );
-
-    await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + 50);
-
-    expect(onScore).toHaveBeenCalledWith(expectedCategory);
-  });
-
-  it('does nothing (no onRoll/onToggleHeld/onScore, no unhandled rejection) when both the bot server and the heuristic fallback fail during a reroll decision', async () => {
+  it('does nothing (no onRoll/onToggleHeld/onScore, no unhandled rejection) when the EV engine has no legal category during a reroll decision', async () => {
     vi.useFakeTimers();
     const unhandledRejections: unknown[] = [];
     const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason);
@@ -330,7 +311,9 @@ describe('useBotTurn', () => {
       rollsLeft: 2,
       scoreCards: { 'player-1': fullScoreCard, 'player-2': fullScoreCard },
     });
-    vi.mocked(requestBotMove).mockRejectedValue(new Error('network down'));
+    vi.mocked(gameEngine.chooseBotRollDecision).mockImplementation(() => {
+      throw new Error('No scorable category available');
+    });
 
     renderHook(() =>
       useBotTurn({
@@ -345,7 +328,6 @@ describe('useBotTurn', () => {
     );
 
     await vi.advanceTimersByTimeAsync(DECISION_WINDOW_MS + HOLD_PAUSE_MS + 50);
-    // Flush any microtasks that would surface an unhandled rejection.
     await Promise.resolve();
     await Promise.resolve();
 
@@ -358,7 +340,7 @@ describe('useBotTurn', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('does nothing (no onScore, no unhandled rejection) when both the bot server and the heuristic fallback fail during a forced score decision', async () => {
+  it('does nothing (no onScore, no unhandled rejection) when the EV engine has no legal category during a forced score decision', async () => {
     vi.useFakeTimers();
     const unhandledRejections: unknown[] = [];
     const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason);
@@ -375,7 +357,9 @@ describe('useBotTurn', () => {
       rollsLeft: 0,
       scoreCards: { 'player-1': fullScoreCard, 'player-2': fullScoreCard },
     });
-    vi.mocked(requestBotMove).mockRejectedValue(new Error('network down'));
+    vi.mocked(gameEngine.chooseBotScoreDecision).mockImplementation(() => {
+      throw new Error('No scorable category available');
+    });
 
     renderHook(() =>
       useBotTurn({

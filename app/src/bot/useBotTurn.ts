@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import type {
-  DiceValue,
-  GameState,
-  PlayerScoreCard,
-  ScoreCategory,
+import {
+  chooseBotRollDecision,
+  chooseBotScoreDecision,
+  type BotRollDecision,
+  type DiceValue,
+  type GameState,
+  type PlayerScoreCard,
+  type ScoreCategory,
 } from '@bronx-dice/game-engine';
-import { requestBotMove } from './botClient';
-import { buildRollDecisionPrompt, buildScoreDecisionPrompt } from './promptBuilder';
-import { parseRollDecision, parseScoreDecision, type RollDecision } from './decision';
-import { chooseHeuristicCategory } from './heuristic';
 import { withDecisionWindow } from './timing';
 
 export const DECISION_WINDOW_MS = 2500;
@@ -24,7 +23,7 @@ interface UseBotTurnOptions {
   onScore: (category: ScoreCategory) => void;
 }
 
-// Sentinel returned when even the heuristic fallback has nothing legal to do
+// Sentinel returned when the EV engine has no legal category available
 // (only possible if the scorecard is already fully complete). This should
 // never happen along any reachable code path in this app, but these
 // functions must never throw/reject, so we surface it as "no-op" instead of
@@ -34,24 +33,13 @@ const NO_OP = Symbol('no-op');
 async function getRollDecision(
   scoreCard: PlayerScoreCard,
   dice: DiceValue[],
-  heldDice: boolean[],
   rollsLeft: number
-): Promise<RollDecision | typeof NO_OP> {
+): Promise<BotRollDecision | typeof NO_OP> {
   try {
-    const prompt = buildRollDecisionPrompt(scoreCard, dice, heldDice, rollsLeft);
-    const raw = await requestBotMove(prompt);
-    const decision = parseRollDecision(raw, scoreCard);
-    if (decision) {
-      return decision;
-    }
-  } catch {
-    // Any network/CLI/parse failure falls through to the heuristic below.
-  }
-  try {
-    return { action: 'score', category: chooseHeuristicCategory(scoreCard, dice, rollsLeft) };
+    return chooseBotRollDecision(scoreCard, dice, rollsLeft);
   } catch (error) {
     console.error(
-      'useBotTurn: chooseHeuristicCategory threw with no legal category available; skipping this turn.',
+      'useBotTurn: chooseBotRollDecision threw with no legal category available; skipping this turn.',
       error
     );
     return NO_OP;
@@ -64,20 +52,10 @@ async function getScoreDecision(
   rollsLeft: number
 ): Promise<ScoreCategory | typeof NO_OP> {
   try {
-    const prompt = buildScoreDecisionPrompt(scoreCard, dice, rollsLeft);
-    const raw = await requestBotMove(prompt);
-    const category = parseScoreDecision(raw, scoreCard);
-    if (category) {
-      return category;
-    }
-  } catch {
-    // Any network/CLI/parse failure falls through to the heuristic below.
-  }
-  try {
-    return chooseHeuristicCategory(scoreCard, dice, rollsLeft);
+    return chooseBotScoreDecision(scoreCard, dice, rollsLeft);
   } catch (error) {
     console.error(
-      'useBotTurn: chooseHeuristicCategory threw with no legal category available; skipping this turn.',
+      'useBotTurn: chooseBotScoreDecision threw with no legal category available; skipping this turn.',
       error
     );
     return NO_OP;
@@ -122,7 +100,7 @@ export function useBotTurn({
     if (rollsLeft > 0) {
       setIsThinking(true);
       withDecisionWindow(DECISION_WINDOW_MS, () =>
-        getRollDecision(scoreCard, dice, heldDice, rollsLeft)
+        getRollDecision(scoreCard, dice, rollsLeft)
       ).then((decision) => {
         setIsThinking(false);
         if (decision === NO_OP) {
