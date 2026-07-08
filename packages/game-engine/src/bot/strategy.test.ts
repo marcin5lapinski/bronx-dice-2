@@ -6,6 +6,7 @@ import {
   type PlayerScoreCard,
 } from '../types/game';
 import { chooseBotRollDecision, chooseBotScoreDecision } from './strategy';
+import { createEmptyScoreCard } from '../scoreCard';
 
 function emptyLowerFilledUpper(upperValue: number): PlayerScoreCard {
   return {
@@ -38,6 +39,83 @@ describe('chooseBotRollDecision', () => {
     const decision = chooseBotRollDecision(scoreCard, dice, 2);
 
     expect(decision).toEqual({ action: 'score', category: 'yahtzee' });
+  });
+
+  it('szkółka phase: targets the value with the most duplicates among still-open categories', () => {
+    const scoreCard = createEmptyScoreCard();
+    const dice: DiceValue[] = [1, 1, 1, 4, 5];
+
+    const decision = chooseBotRollDecision(scoreCard, dice, 2);
+
+    expect(decision).toEqual({
+      action: 'reroll',
+      hold: [true, true, true, false, false],
+    });
+  });
+
+  it('szkółka phase: ignores dice matching an already-filled category', () => {
+    const scoreCard: PlayerScoreCard = {
+      upper: { aces: null, twos: null, threes: null, fours: null, fives: null, sixes: 18 },
+      lower: Object.fromEntries(
+        LOWER_CATEGORIES.map((category) => [category, null])
+      ) as PlayerScoreCard['lower'],
+    };
+    const dice: DiceValue[] = [1, 2, 3, 6, 6];
+
+    const decision = chooseBotRollDecision(scoreCard, dice, 2);
+
+    expect(decision).toEqual({
+      action: 'reroll',
+      hold: [false, false, true, false, false],
+    });
+  });
+
+  it('szkółka phase: breaks a tie in duplicate count toward the higher face value', () => {
+    const scoreCard: PlayerScoreCard = {
+      upper: { aces: 0, twos: null, threes: null, fours: 0, fives: 0, sixes: 0 },
+      lower: Object.fromEntries(
+        LOWER_CATEGORIES.map((category) => [category, null])
+      ) as PlayerScoreCard['lower'],
+    };
+    const dice: DiceValue[] = [2, 2, 3, 3, 6];
+
+    const decision = chooseBotRollDecision(scoreCard, dice, 2);
+
+    expect(decision).toEqual({
+      action: 'reroll',
+      hold: [false, false, true, true, false],
+    });
+  });
+
+  it('szkółka phase: rerolls everything when no die matches a still-open category', () => {
+    const scoreCard: PlayerScoreCard = {
+      upper: { aces: 3, twos: 6, threes: 9, fours: 12, fives: 15, sixes: null },
+      lower: Object.fromEntries(
+        LOWER_CATEGORIES.map((category) => [category, null])
+      ) as PlayerScoreCard['lower'],
+    };
+    const dice: DiceValue[] = [1, 1, 2, 3, 4];
+
+    const decision = chooseBotRollDecision(scoreCard, dice, 2);
+
+    expect(decision).toEqual({
+      action: 'reroll',
+      hold: [false, false, false, false, false],
+    });
+  });
+
+  it('szkółka phase: stops instead of rerolling when the targeted value is already maxed out', () => {
+    const scoreCard: PlayerScoreCard = {
+      upper: { aces: 0, twos: 0, threes: null, fours: 0, fives: 0, sixes: 0 },
+      lower: Object.fromEntries(
+        LOWER_CATEGORIES.map((category) => [category, null])
+      ) as PlayerScoreCard['lower'],
+    };
+    const dice: DiceValue[] = [3, 3, 3, 3, 3];
+
+    const decision = chooseBotRollDecision(scoreCard, dice, 2);
+
+    expect(decision).toEqual({ action: 'score', category: 'threes' });
   });
 });
 
