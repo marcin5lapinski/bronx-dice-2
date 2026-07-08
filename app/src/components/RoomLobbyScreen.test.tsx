@@ -210,4 +210,9 @@ describe('RoomLobbyScreen', () => {
 
     resolveLeave();
   });
+
+  it('renders a copy-room-code button next to the room heading', () => {
+    render(<RoomLobbyScreen room={lobbyRoom()} roomId="AAAAA" ownUid="uid-1" onLeft={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Kopiuj kod' })).toBeInTheDocument();
+  });
 });

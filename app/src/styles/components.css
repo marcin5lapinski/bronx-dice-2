@@ -597,6 +597,17 @@
   margin: 0;
 }
 
+.room-lobby-screen .room-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.room-lobby-screen .room-code-row h1 {
+  margin: 0;
+}
+
 /* Auth screens (Login/Register/ForgotPassword/ProfileSetup/Profile) */
 .auth-screen {
   display: flex;

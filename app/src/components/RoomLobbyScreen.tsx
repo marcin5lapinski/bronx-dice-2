@@ -16,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { MIN_PLAYERS } from '@bronx-dice/game-engine';
 import { avatarSrc } from './avatarOptions';
+import CopyRoomCodeButton from './CopyRoomCodeButton';
 import InlineSpinner from './InlineSpinner';
 import { setReady, startGame, leaveRoom } from '../services/roomService';
 import { reorderIds, shufflePlayerOrder } from '../utils/playerOrder';
@@ -170,7 +171,10 @@ function RoomLobbyScreen({ room, roomId, ownUid, onLeft }: RoomLobbyScreenProps)
 
   return (
     <div className="room-lobby-screen">
-      <h1>Pokój {roomId}</h1>
+      <div className="room-code-row">
+        <h1>Pokój {roomId}</h1>
+        <CopyRoomCodeButton roomId={roomId} />
+      </div>
       {error && <p className="auth-error">{error}</p>}
       {isHost && (
         <label className="randomize-order-label">
